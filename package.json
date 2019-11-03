@@ -2,11 +2,11 @@
   "name": "minecraftmanagerbot",
   "version": "1.0.0",
   "description": "Minecraft Manager Bot",
-  "main": "bot.js",
+  "main": "minecraftbot.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "tsc",
-    "start": "node bot.js"
+    "start": "node minecraftbot.js"
   },
   "author": "Nicholas Xavier",
   "license": "MIT",
