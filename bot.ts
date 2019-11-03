@@ -136,7 +136,23 @@ bot.on("message", async message => {
 		} else if (cmd === "stats") {
 			if (instance.State.Code === 16) { // code 16: running
 				getMCServerInfo(instance.PublicIpAddress).then(result => {
-					// TODO send stats
+					let playernames: string = "";
+					for (const player of result.players.sample) {
+						playernames += player.name + "\n";
+					}
+
+					message.channel.send({
+						embed: {
+							color: 0x03DFFC,
+							author: {
+								name: "Players: " + result.players.online + "/" + result.players.max,
+							},
+							description: playernames,
+							footer: {
+								text: "IP: " + instance.PublicIpAddress + ":" + cfgs.gameport
+							}
+						}
+					});
 				});
 			} else {
 				message.channel.send(strings.messages.instance_not_running);
