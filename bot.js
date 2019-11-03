@@ -142,8 +142,6 @@ bot.on("message", async message => {
 	} else if (cmd === "stats") {
 		// TODO get stats from minecraft & send msg
 	}
-
-	console.log(1);
 });
 
 bot.on("messageReactionAdd", async (reaction, user) => {
