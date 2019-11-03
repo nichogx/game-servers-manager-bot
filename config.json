@@ -1,0 +1,9 @@
+{
+	"language": "portuguese",
+
+	"permitted_roles": [
+		"minecraft_whitelist"
+	],
+
+	"gameport": 25565
+}

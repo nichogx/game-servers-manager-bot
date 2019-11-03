@@ -1,0 +1,19 @@
+{
+  "name": "minecraftmanagerbot",
+  "version": "1.0.0",
+  "description": "Minecraft Manager Bot",
+  "main": "bot.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Nicholas Xavier",
+  "license": "MIT",
+  "dependencies": {
+    "aws-sdk": "^2.562.0",
+    "discord.js": "^11.5.1",
+    "dotenv": "^8.0.0",
+    "minecraft-protocol": "^1.9.4",
+    "ssh-exec": "^2.0.0",
+    "winston": "^3.2.1"
+  }
+}
