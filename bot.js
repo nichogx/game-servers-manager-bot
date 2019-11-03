@@ -90,11 +90,13 @@ bot.on("message", async message => {
 
 	for (let role of cfgs.permitted_roles) {
 		let permRole = message.guild.roles.find(val => val.name === role);
-		if (permRole && member.roles.has(permRole.id)) {
+		if (permRole && message.member.roles.has(permRole.id)) {
 			hasPermission = true;
 			break;
 		}
 	}
+
+	if (!hasPermission) return;
 
 	if (cmd === "open" || cmd === "start") {
 		const instanceIDparam = { InstanceIds: [process.env.AWS_INSTANCEID] };
@@ -140,6 +142,8 @@ bot.on("message", async message => {
 	} else if (cmd === "stats") {
 		// TODO get stats from minecraft & send msg
 	}
+
+	console.log(1);
 });
 
 bot.on("messageReactionAdd", async (reaction, user) => {
