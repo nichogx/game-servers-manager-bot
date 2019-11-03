@@ -5,5 +5,7 @@
 		"minecraft_whitelist"
 	],
 
-	"gameport": 25565
+	"gameport": 25565,
+
+	"modpack_link": "https://galere.s3.amazonaws.com/galerepack.7z"
 }

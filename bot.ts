@@ -99,6 +99,14 @@ bot.on("message", async message => {
 
 	if (!hasPermission) return;
 
+	// commands that don't need the instance
+	if (cmd === "pack" || cmd === "modpack" || cmd === "link") {
+		message.channel.send(strings.messages.modpack_link + cfgs.modpack_link);
+
+		return;
+	}
+	
+	// commands that need the instance
 	getInstance().then(instance => {
 		if (cmd === "open" || cmd === "start") {
 			if (instance.State.Code === 16) { // code 16: running
@@ -121,6 +129,8 @@ bot.on("message", async message => {
 				// other state
 				message.channel.send(strings.messages.please_wait_instance_state);
 			}
+
+			return;
 		} else if (cmd === "stop") {
 			if (instance.State.Code === 16) { // code 16: running
 				getMCServerInfo(instance.PublicIpAddress).then(result => {
@@ -133,6 +143,8 @@ bot.on("message", async message => {
 			} else {
 				message.channel.send(strings.messages.instance_not_running);
 			}
+
+			return;
 		} else if (cmd === "stats") {
 			if (instance.State.Code === 16) { // code 16: running
 				getMCServerInfo(instance.PublicIpAddress).then(result => {
@@ -149,13 +161,17 @@ bot.on("message", async message => {
 							},
 							description: playernames,
 							footer: {
-								text: "IP: " + instance.PublicIpAddress + ":" + cfgs.gameport
+								text: "IP: " + instance.PublicIpAddress
 							}
 						}
 					});
 				});
+
+				return;
 			} else {
 				message.channel.send(strings.messages.instance_not_running);
+
+				return;
 			}
 		}
 	}).catch(err => {
@@ -189,7 +205,7 @@ function notifyInstanceStarting(statusMessage: Message): void {
 function notifyMinecraftStarting(statusMessage: Message, ip: string): void {
 	getMCServerInfo(ip).then(result => {
 		logger.verbose("server opened!");
-		statusMessage.edit(strings.messages.server_opened + " " + ip + ":" + cfgs.gameport);
+		statusMessage.edit(strings.messages.server_opened + " " + ip);
 	}).catch(err => {
 		if (err.code === "ETIMEDOUT") {
 			logger.verbose("server still opening, checking again in 20 seconds: " + err.code);
