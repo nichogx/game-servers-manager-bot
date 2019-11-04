@@ -4,10 +4,7 @@ dotenv.config();
 
 import winston, { Logger } from 'winston';
 import { Client, Role, Message } from 'discord.js';
-import mc from 'minecraft-protocol';
-import AWS from "aws-sdk";
-import EC2, { Instance } from 'aws-sdk/clients/ec2';
-const ssh: any = require('ssh-exec');
+import { ServerManager } from './ServerManager';
 const cfgs: any = require('./config.json');
 const pjson: any = require('./package.json');
 const strings: any = require('./languages/' + cfgs.language + '.json');
@@ -36,13 +33,15 @@ if (!token) {
 	process.exit(1);
 }
 
-// configures AWS
-AWS.config.update({ region: "us-east-1" });
-const ec2: EC2 = new EC2({ apiVersion: '2016-11-15' });;
-
+// creates the bot
 const bot: Client = new Client();
-const instanceIDparam: { InstanceIds: string[] } = { InstanceIds: [process.env.AWS_INSTANCEID] };
 
+// creates the server manager
+const manager: ServerManager = new ServerManager(logger, cfgs.check_every_x_minutes);
+
+/**
+ * Handles bot on ready
+ */
 bot.on("ready", () => {
 	logger.info(strings.log.connected);
 	logger.info(strings.log.loggedin
@@ -53,11 +52,11 @@ bot.on("ready", () => {
 
 	// reset activity once every half hour (sometimes it weirds out)
 	setInterval(() => bot.user.setActivity(pjson.description + " v" + pjson.version), 1800000);
-
-	// once every 15 minutes, check if server is empty and should be closed
-	setInterval(checkShouldClose, 900000);
 });
 
+/**
+ * Handles error events
+ */
 bot.on("error", error => {
 	logger.error(strings.log.unhandled_error);
 	if (error.message) {
@@ -65,14 +64,23 @@ bot.on("error", error => {
 	}
 });
 
+/**
+ * Handles reconnecting events
+ */
 bot.on("reconnecting", () => {
 	logger.info(strings.log.reconnecting);
 });
 
+/**
+ * Handles warning events
+ */
 bot.on("warn", info => {
 	logger.warn(info);
 });
 
+/**
+ * Handles messages events
+ */
 bot.on("message", async message => {
 	if (message.author.bot) {
 		return; // skip message if the author is a bot
@@ -105,9 +113,9 @@ bot.on("message", async message => {
 
 		return;
 	}
-	
+
 	// commands that need the instance
-	getInstance().then(instance => {
+	manager.getInstance().then(instance => {
 		if (cmd === "open" || cmd === "start") {
 			if (instance.State.Code === 16) { // code 16: running
 				// instance is running
@@ -115,15 +123,13 @@ bot.on("message", async message => {
 					notifyMinecraftStarting(msg as Message, instance.PublicIpAddress);
 				});
 			} else if (instance.State.Code === 80) { // code 80: stopped
-				ec2.startInstances(instanceIDparam, (err, data) => {
-					if (err) {
-						logger.error(err);
-						message.channel.send(strings.messages.error_starting);
-					} else {
-						message.channel.send(strings.messages.instance_starting).then(msg => {
-							notifyInstanceStarting(msg as Message);
-						});
-					}
+				manager.startInstance().then((data) => {
+					message.channel.send(strings.messages.instance_starting).then(msg => {
+						notifyInstanceStarting(msg as Message);
+					});
+				}).catch(err => {
+					logger.error(err);
+					message.channel.send(strings.messages.error_starting);
 				});
 			} else {
 				// other state
@@ -133,9 +139,9 @@ bot.on("message", async message => {
 			return;
 		} else if (cmd === "stop") {
 			if (instance.State.Code === 16) { // code 16: running
-				getMCServerInfo(instance.PublicIpAddress).then(result => {
+				manager.getMCServerInfo(instance.PublicIpAddress).then(result => {
 					if (result.players.online === 0) {
-						closeServer(instance.PublicIpAddress);
+						manager.closeServer(instance.PublicIpAddress);
 					} else {
 						message.channel.send(strings.messages.server_not_empty + " " + result.players.online);
 					}
@@ -147,7 +153,7 @@ bot.on("message", async message => {
 			return;
 		} else if (cmd === "stats") {
 			if (instance.State.Code === 16) { // code 16: running
-				getMCServerInfo(instance.PublicIpAddress).then(result => {
+				manager.getMCServerInfo(instance.PublicIpAddress).then(result => {
 					let playernames: string = "";
 					for (const player of result.players.sample) {
 						playernames += player.name + "\n";
@@ -181,8 +187,13 @@ bot.on("message", async message => {
 	});
 });
 
+/**
+ * Handles the message that notifies the Discord user that the ec2 instance is starting
+ * 
+ * @param statusMessage the message to update
+ */
 function notifyInstanceStarting(statusMessage: Message): void {
-	getInstance().then(instance => {
+	manager.getInstance().then(instance => {
 		if (instance.State.Code === 16) { // code 16: running
 			// instance is running
 			statusMessage.edit(strings.messages.instance_started_waiting_server).then(msg => {
@@ -202,8 +213,14 @@ function notifyInstanceStarting(statusMessage: Message): void {
 	});
 }
 
+/**
+ * Handles the message that notifies the Discord user that Minecraft is starting
+ * 
+ * @param statusMessage the message to update
+ * @param ip the ip of the ec2 instance
+ */
 function notifyMinecraftStarting(statusMessage: Message, ip: string): void {
-	getMCServerInfo(ip).then(result => {
+	manager.getMCServerInfo(ip).then(result => {
 		logger.verbose("server opened!");
 		statusMessage.edit(strings.messages.server_opened + " " + ip);
 	}).catch(err => {
@@ -214,72 +231,6 @@ function notifyMinecraftStarting(statusMessage: Message, ip: string): void {
 			logger.verbose("connection refused, checking again in 20 seconds: " + err.code);
 			setTimeout(() => { notifyMinecraftStarting(statusMessage, ip) }, 20000); // 20 seconds
 		}
-	});
-}
-
-function checkShouldClose(): void {
-	logger.verbose("checking if server should be closed");
-	getInstance().then(instance => {
-		if (instance.State.Code === 16) { // code 16: running
-			// instance is running
-			getMCServerInfo(instance.PublicIpAddress).then(result => {
-				if (result.players.online === 0) {
-					logger.info("server should be closed");
-					closeServer(instance.PublicIpAddress);
-				} else {
-					logger.verbose("server should not be closed");
-				}
-			}).catch(err => {
-				logger.error(err);
-			});
-		}
-	}).catch(err => {
-		logger.error(err);
-		logger.error("location: checkShouldClose");
-	});
-}
-
-function getMCServerInfo(ip: string): Promise<mc.NewPingResult> {
-	return new Promise((resolve, reject) => {
-		mc.ping({ host: ip, port: cfgs.gameport }, (err, result: mc.NewPingResult) => {
-			if (err) {
-				reject(err);
-			} else {
-				resolve(result);
-			}
-		});
-	});
-}
-
-function getInstance(): Promise<Instance> {
-	return new Promise((resolve, reject) => {
-		ec2.describeInstances(instanceIDparam, (err, data) => {
-			if (err || data.Reservations.length === 0 || data.Reservations[0].Instances.length === 0) {
-				if (!err) reject("reservation length or instances length is zero");
-				else reject(err);
-			} else {
-				const instance = data.Reservations[0].Instances[0];
-				resolve(instance);
-			}
-		});
-	});
-}
-
-function closeServer(ip: string) {
-	logger.info("sending stop command");
-	ssh("/home/ubuntu/closegalerepack.sh", {
-		user: process.env.SSH_USER,
-		host: ip,
-		key: process.env.SSH_KEY_PATH
-	}, () => {
-		logger.info("shutting down server in 10 seconds");
-		setTimeout(() => {
-			ec2.stopInstances(instanceIDparam, (err, data) => {
-				if (err) {
-					logger.error(err);
-				}
-			});
-		}, 10000);
 	});
 }
 
