@@ -23,7 +23,17 @@ const logger: Logger = winston.createLogger({
 		new winston.transports.Console({ level: 'debug' }),
 		new winston.transports.File({ filename: './logs/log-error.log', level: 'error' }),
 		new winston.transports.File({ filename: './logs/log-combined.log', level: 'verbose' })
-	]
+	],
+	exceptionHandlers: [
+		new winston.transports.Console(),
+		new winston.transports.File({ filename: 'logs/exceptions.log' }),
+	],
+	exitOnError: false
+});
+// make winston log unhandled rejections
+process.on('unhandledRejection', (reason, promise) => {
+	if (reason) throw reason;
+	else throw { message: promise };
 });
 
 // configures the token
