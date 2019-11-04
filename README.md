@@ -41,10 +41,15 @@ Will reply with the number of online players, the maximum players, the names of 
 
 5 - Configure the bot and host it somewhere else
 
-## Can you do X?
-I can certainly consider it. 
+## Can you do/fix X?
+I can certainly try my best.
 
-Open a (GitHub Issue)[https://github.com/nichogx/minecraft-server-manager-bot/issues] with your suggestion or bug report :)
+Open a [GitHub Issue](https://github.com/nichogx/minecraft-server-manager-bot/issues) with your suggestion or bug report :)
+
+## Contributing and Translating
+To contribute, just open a pull request and I will review.
+
+The files for translating are in the languages folder. Just copy the english.json file and change it into your language. Thank you! :D
 
 ## Planned features
 - use RCON instead of SSH to send /stop command to server
