@@ -155,8 +155,11 @@ bot.on("message", async message => {
 			if (instance.State.Code === 16) { // code 16: running
 				manager.getMCServerInfo(instance.PublicIpAddress).then(result => {
 					let playernames: string = "";
-					for (const player of result.players.sample) {
-						playernames += player.name + "\n";
+
+					if (result.players.sample instanceof Array) {
+						for (const player of result.players.sample) {
+							playernames += player.name + "\n";
+						}
 					}
 
 					message.channel.send({
