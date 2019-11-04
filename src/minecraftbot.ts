@@ -5,9 +5,9 @@ dotenv.config();
 import winston, { Logger } from 'winston';
 import { Client, Role, Message } from 'discord.js';
 import { ServerManager } from './ServerManager';
-const cfgs: any = require('./config.json');
-const pjson: any = require('./package.json');
-const strings: any = require('./languages/' + cfgs.language + '.json');
+const cfgs: any = require('../config.json');
+const pjson: any = require('../package.json');
+const strings: any = require('../languages/' + cfgs.language + '.json');
 
 // configures logger
 const logger: Logger = winston.createLogger({
