@@ -251,6 +251,7 @@ function notifyMinecraftStarting(statusMessage: Message, ip: string): void {
 		logger.verbose("server opened!");
 		statusMessage.edit(strings.messages.server_opened + " " + ip);
 	}).catch(err => {
+		logger.verbose("getInfo rejected.");
 		if (err.code === "ETIMEDOUT") {
 			logger.verbose("server still opening, checking again in 20 seconds: " + err.code);
 			notifyMinecraftStarting(statusMessage, ip);

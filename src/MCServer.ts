@@ -12,14 +12,24 @@ export class MCServer {
 	 */
 	public static getInfo(ip: string, port: number): Promise<MCPingResult> {
 		return new Promise((resolve, reject) => {
+
+			// this timeout is a hack to makeup for the fact that the library 
+			// sometimes doesn't call the callback
+			const timeout = setTimeout(() => {
+				reject({ code: "CUSTOMTIMEOUT" });
+			}, 20000); // 20 seconds
+
 			mc.ping({ host: ip, port: port }, (err, result: NewPingResult) => {
 				if (err) {
-					reject(err);
+					clearTimeout(timeout);
+					return reject(err);
 				} else {
-					resolve({
+					clearTimeout(timeout);
+					return resolve({
 						players: {
 							online: result.players.online,
 							max: result.players.max,
+							list: result.players.sample
 						}
 					});
 				}
