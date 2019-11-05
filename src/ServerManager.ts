@@ -93,6 +93,7 @@ export class ServerManager {
 	 */
 	public startInstance(): Promise<void> {
 		return new Promise((resolve, reject) => {
+			this.logger.verbose("starting instance");
 			this.ec2.startInstances(this.instanceIDparam, (err, data) => {
 				this.logger.info("starting server check interval");
 				this.interval.start();

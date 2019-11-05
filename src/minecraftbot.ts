@@ -5,8 +5,8 @@ dotenv.config();
 import winston, { Logger } from 'winston';
 import { Client, Role, Message } from 'discord.js';
 import { ServerManager } from './ServerManager';
-const cfgs: any = require('../config.json');
-const pjson: any = require('../package.json');
+import cfgs from '../config.json';
+import pjson from '../package.json';
 const strings: any = require('../languages/' + cfgs.language + '.json');
 
 // configures logger
@@ -32,6 +32,7 @@ const logger: Logger = winston.createLogger({
 });
 // make winston log unhandled rejections
 process.on('unhandledRejection', (reason, promise) => {
+	logger.error("unhandled promise rejection. Check exceptions.log");
 	if (reason) throw reason;
 	else throw { message: promise };
 });
@@ -117,8 +118,10 @@ bot.on("message", async message => {
 
 	if (!hasPermission) return;
 
+	logger.verbose(`received command '${cmd}' from ${message.author.username}`);
 	// commands that don't need the instance
 	if (cmd === "pack" || cmd === "modpack" || cmd === "link") {
+		logger.verbose("sending modpack link to user");
 		message.channel.send(strings.messages.modpack_link + cfgs.modpack_link);
 
 		return;
@@ -127,13 +130,16 @@ bot.on("message", async message => {
 	// commands that need the instance
 	manager.getInstance().then(instance => {
 		if (cmd === "open" || cmd === "start") {
+			logger.verbose("opening server");
 			if (instance.State.Code === 16) { // code 16: running
 				// instance is running
+				logger.verbose("instance already open, sending message");
 				message.channel.send(strings.messages.instance_started_waiting_server).then(msg => {
 					notifyMinecraftStarting(msg as Message, instance.PublicIpAddress);
 				});
 			} else if (instance.State.Code === 80) { // code 80: stopped
 				manager.startInstance().then((data) => {
+					logger.verbose("instance starting, sending message");
 					message.channel.send(strings.messages.instance_starting).then(msg => {
 						notifyInstanceStarting(msg as Message);
 					});
@@ -144,6 +150,7 @@ bot.on("message", async message => {
 				});
 			} else {
 				// other state
+				logger.verbose("unknown state, sending message");
 				message.channel.send(strings.messages.please_wait_instance_state);
 			}
 
@@ -154,10 +161,12 @@ bot.on("message", async message => {
 					if (result.players.online === 0) {
 						manager.closeServer(instance.PublicIpAddress);
 					} else {
+						logger.verbose("server not empty");
 						message.channel.send(strings.messages.server_not_empty + " " + result.players.online);
 					}
 				});
 			} else {
+				logger.verbose("instance not running");
 				message.channel.send(strings.messages.instance_not_running);
 			}
 
@@ -193,6 +202,10 @@ bot.on("message", async message => {
 
 				return;
 			}
+		} else {
+			logger.verbose(`unknown command '${cmd}'`);
+
+			return;
 		}
 	}).catch(err => {
 		logger.error(err);
@@ -207,9 +220,11 @@ bot.on("message", async message => {
  * @param statusMessage the message to update
  */
 function notifyInstanceStarting(statusMessage: Message): void {
+	logger.verbose("checking if instance has started");
 	manager.getInstance().then(instance => {
 		if (instance.State.Code === 16) { // code 16: running
 			// instance is running
+			logger.verbose("instance now running, editing message and waiting for minecraft");
 			statusMessage.edit(strings.messages.instance_started_waiting_server).then(msg => {
 				notifyMinecraftStarting(msg, instance.PublicIpAddress);
 			});
@@ -218,6 +233,7 @@ function notifyInstanceStarting(statusMessage: Message): void {
 			setTimeout(() => { notifyInstanceStarting(statusMessage) }, 8000); // 8 seconds
 		} else {
 			// other state
+			logger.verbose("unknown state in notifyInstanceStarting, sending message");
 			statusMessage.channel.send(strings.messages.please_wait_instance_state + " in notifyInstanceStarting");
 		}
 	}).catch(err => {
@@ -234,6 +250,7 @@ function notifyInstanceStarting(statusMessage: Message): void {
  * @param ip the ip of the ec2 instance
  */
 function notifyMinecraftStarting(statusMessage: Message, ip: string): void {
+	logger.verbose("checking if minecraft has opened");
 	manager.getMCServerInfo(ip).then(result => {
 		logger.verbose("server opened!");
 		statusMessage.edit(strings.messages.server_opened + " " + ip);
@@ -242,7 +259,7 @@ function notifyMinecraftStarting(statusMessage: Message, ip: string): void {
 			logger.verbose("server still opening, checking again in 20 seconds: " + err.code);
 			notifyMinecraftStarting(statusMessage, ip);
 		} else {
-			logger.verbose("connection refused, checking again in 20 seconds: " + err.code);
+			logger.verbose("error, checking again in 20 seconds: " + err.code);
 			setTimeout(() => { notifyMinecraftStarting(statusMessage, ip) }, 20000); // 20 seconds
 		}
 	});

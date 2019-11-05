@@ -1,6 +1,13 @@
 node_modules
 .env
 
-*.js
-*.map
-*.log
+.nyc_output
+coverage
+
+src/*.js
+test/*.js
+
+src/*.map
+test/*.map
+
+logs/*.log

@@ -40,6 +40,7 @@ export default class IntervalManager {
 	public stop(): boolean {
 		if (this.interval !== null) {
 			clearInterval(this.interval);
+			this.interval = null;
 		}
 
 		return this.active();

@@ -4,14 +4,21 @@
   "description": "Minecraft Manager Bot",
   "main": "src/minecraftbot.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "mocha --timeout 10000 test",
+    "cover": "nyc --reporter text --reporter html yarn run test",
     "build": "tsc",
     "start": "node src/minecraftbot.js"
   },
   "author": "Nicholas Xavier",
   "license": "MIT",
   "devDependencies": {
-    "@types/node": "^12.12.5"
+    "@types/chai": "^4.2.4",
+    "@types/mocha": "^5.2.7",
+    "@types/node": "^12.12.5",
+    "chai": "^4.2.0",
+    "chai-as-promised": "^7.1.1",
+    "mocha": "^6.2.2",
+    "nyc": "^14.1.1"
   },
   "dependencies": {
     "aws-sdk": "^2.562.0",
