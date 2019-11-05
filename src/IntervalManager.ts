@@ -8,46 +8,65 @@ export default class IntervalManager {
 
 	/**
 	 * constructor
-	 * starts the timeout
+	 * does NOT start the timeout
 	 * 
 	 * @param seconds the time in seconds
 	 */
 	public constructor(callback: CallableFunction, seconds: number) {
 		this.seconds = seconds;
 		this.callback = callback;
-
-		this.start();
 	}
 
 	/**
 	 * start the timeout
+	 * 
+	 * @returns the state of the timeout (active or inactive)
 	 */
-	public start(): void {
+	public start(): boolean {
 		if (this.interval === null && this.seconds !== 0) {
 			this.interval = setInterval(() => {
 				this.callback();
 			}, this.seconds * 1000);
 		}
+
+		return this.active();
 	}
 
 	/**
 	 * stops the timeout
+	 * 
+	 * @returns the state of the timeout (active or inactive)
 	 */
-	public stop(): void {
+	public stop(): boolean {
 		if (this.interval !== null) {
 			clearInterval(this.interval);
 		}
+
+		return this.active();
 	}
 
 	/**
 	 * resets the timer (stops and restarts)
 	 * 
 	 * @param newTime optional, the new interval to use (in seconds)
+	 * 
+	 * @returns the state of the timeout (active or inactive)
 	 */
-	public reset(newTime: number = this.seconds): void {
+	public reset(newTime: number = this.seconds): boolean {
 		this.stop();
 		this.seconds = newTime;
 		this.start();
+
+		return this.active();
+	}
+
+	/**
+	 * check the state of the interval
+	 * 
+	 * @returns true if active, false if inactive
+	 */
+	public active(): boolean {
+		return this.interval !== null;
 	}
 
 }
