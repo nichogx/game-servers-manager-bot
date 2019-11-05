@@ -7,5 +7,9 @@
 
 	"modpack_link": "https://galere.s3.amazonaws.com/galerepack.7z",
 
-	"check_every_x_minutes": 15
+	"check_every_x_minutes": 15,
+
+	"minecraft_port": 25565,
+
+	"close_script_path": "/home/ubuntu/closegalerepack.sh"
 }

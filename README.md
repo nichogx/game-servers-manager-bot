@@ -39,7 +39,13 @@ Will reply with the number of online players, the maximum players, the names of 
 
 4 - Add an entry to your @reboot crontab to open the server in a screen or tmux session on reboot
 
-5 - Configure the bot and host it somewhere else
+5 - Configure the bot and host it somewhere else. To configure, you have to edit config.json and set the required environmental variables. You can either copy .env.example to .env and set them there or use your hosting service's service. The list of environmental variables you have to set are in the .env.example file:
+- `TOKEN` - your Discord bot token
+- `AWS_INSTANCEID` - the ec2 instance ID
+- `AWS_ACCESS_KEY_ID` - your iam (recommended) or root user (not recommended) access key
+- `AWS_SECRET_ACCESS_KEY` - your iam (recommended) or root user (not recommended) secret access key
+- `SSH_USER` - the instance user to ssh as (and send minecraft server commands)
+- `SSH_KEY_PATH` - the ssh key for your instance
 
 ## Can you do/fix X?
 I can certainly try my best.

@@ -7,6 +7,8 @@ import EC2 from 'aws-sdk/clients/ec2';
 import IntervalManager from "./IntervalManager";
 import { MCServer } from "./MCServer";
 
+import cfgs from "../config.json";
+
 export class ServerManager {
 
 	private logger: Logger = null;
@@ -16,6 +18,7 @@ export class ServerManager {
 	private instanceIDparam: { InstanceIds: string[] } = null;
 
 	private mcport: number = 25565;
+	private closeScriptPath: string = null;
 
 	/**
 	 * constructor
@@ -27,10 +30,11 @@ export class ServerManager {
 	public constructor(logger: Logger, checkIntervalMinutes: number = 0) {
 		this.logger = logger;
 
-		this.mcport = Number.parseInt(process.env.MINECRAFT_PORT);
+		this.mcport = cfgs.minecraft_port;
+		this.closeScriptPath = cfgs.close_script_path;
 
 		// configures AWS
-		AWS.config.update({ region: "us-east-1" });
+		AWS.config.update({ region: process.env.AWS_REGION });
 		this.ec2 = new EC2({ apiVersion: '2016-11-15' });
 
 		this.instanceIDparam = { InstanceIds: [process.env.AWS_INSTANCEID] };
@@ -113,7 +117,7 @@ export class ServerManager {
 	 */
 	public closeServer(ip: string) {
 		this.logger.info("sending stop command");
-		ssh("/home/ubuntu/closegalerepack.sh", {
+		ssh(this.closeScriptPath, {
 			user: process.env.SSH_USER,
 			host: ip,
 			key: process.env.SSH_KEY_PATH

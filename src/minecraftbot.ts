@@ -25,9 +25,9 @@ if (!token) {
 const bot: Client = new Client();
 
 // creates the server manager
+const mcport = cfgs.minecraft_port;
 const manager: ServerManager = new ServerManager(logger, cfgs.check_every_x_minutes);
 
-const mcPort = Number.parseInt(process.env.MINECRAFT_PORT);
 
 /**
  * Handles bot on ready
@@ -136,7 +136,7 @@ bot.on("message", async message => {
 			return;
 		} else if (cmd === "stop") {
 			if (instance.State.Code === 16) { // code 16: running
-				MCServer.getInfo(instance.PublicIpAddress, mcPort).then(result => {
+				MCServer.getInfo(instance.PublicIpAddress, mcport).then(result => {
 					if (result.players.online === 0) {
 						manager.closeServer(instance.PublicIpAddress);
 					} else {
@@ -152,7 +152,7 @@ bot.on("message", async message => {
 			return;
 		} else if (cmd === "stats") {
 			if (instance.State.Code === 16) { // code 16: running
-				MCServer.getInfo(instance.PublicIpAddress, mcPort).then(result => {
+				MCServer.getInfo(instance.PublicIpAddress, mcport).then(result => {
 					let playernames: string = "";
 
 					if (result.players.list instanceof Array) {
@@ -230,7 +230,7 @@ function notifyInstanceStarting(statusMessage: Message): void {
  */
 function notifyMinecraftStarting(statusMessage: Message, ip: string): void {
 	logger.verbose("checking if minecraft has opened");
-	MCServer.getInfo(ip, mcPort).then(result => {
+	MCServer.getInfo(ip, mcport).then(result => {
 		logger.verbose("server opened!");
 		statusMessage.edit(strings.messages.server_opened + " " + ip);
 	}).catch(err => {
