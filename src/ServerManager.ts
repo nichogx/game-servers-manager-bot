@@ -6,6 +6,7 @@ import AWS from "aws-sdk";
 import EC2 from 'aws-sdk/clients/ec2';
 import IntervalManager from "./IntervalManager";
 import { MCServer } from "./MCServer";
+import Ajv from "ajv";
 
 import cfgs from "../config.json";
 
@@ -29,6 +30,27 @@ export class ServerManager {
 	 */
 	public constructor(logger: Logger, checkIntervalMinutes: number = 0) {
 		this.logger = logger;
+
+		// validate configuration
+		const ajv = new Ajv();
+		const validConfig = ajv.validate(require("./schemas/ServerManagerConfig.schema.json"), cfgs);
+		if (!validConfig) {
+			logger.error("ServerManager: invalid config.json");
+			logger.error(ajv.errorsText());
+			throw new Error("ServerManager: invalid config.json");
+		}
+
+		const requiredEnvs = ["AWS_REGION", "AWS_INSTANCEID", "AWS_ACCESS_KEY_ID",
+			"AWS_SECRET_ACCESS_KEY", "SSH_USER", "SSH_KEY_PATH"
+		];
+		for (const env of requiredEnvs) {
+			if (!process.env[env]) {
+				logger.error("ServerManager: invalid environmental variables");
+				throw new Error("ServerManager: invalid environmental variables");
+			}
+		}
+
+		// validate environment variables
 
 		this.mcport = cfgs.minecraft_port;
 		this.closeScriptPath = cfgs.close_script_path;

@@ -104,7 +104,7 @@
   resolved "https://registry.yarnpkg.com/@types/node/-/node-12.12.5.tgz#66103d2eddc543d44a04394abb7be52506d7f290"
   integrity sha512-KEjODidV4XYUlJBF3XdjSH5FWoMCtO0utnhtdLf1AgeuZLOrRbvmU/gaRCVg7ZaQDjVf3l84egiY0mRNe5xE4A==
 
-ajv@^6.5.4:
+ajv@^6.10.2, ajv@^6.5.4:
   version "6.10.2"
   resolved "https://registry.yarnpkg.com/ajv/-/ajv-6.10.2.tgz#d3cea04d6b017b2894ad69040fec8b623eb4bd52"
   integrity sha512-TXtUUEYHuaTEbLZWIKUr5pmBuhDLy+8KYtPYdcV8qC+pOZL+NKqYwvWSRrVXHn+ZmRRAu8vJTAznH7Oag6RVRw==

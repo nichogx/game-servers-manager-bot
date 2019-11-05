@@ -4,30 +4,47 @@ dotenv.config();
 
 import { Logger } from "winston";
 import { Client, Role, Message } from "discord.js";
+import Ajv from "ajv";
 import { ServerManager } from "./ServerManager";
 import cfgs from "../config.json";
 import pjson from "../package.json";
 import { MCServer } from "./MCServer";
 import { LoggerFactory } from "./LoggerFactory";
-const strings: any = require("../languages/" + cfgs.language + ".json");
 
 // configures logger
 const logger: Logger = LoggerFactory.configureLogger();
 
-// configures the token
-const token: string = process.env.TOKEN;
-if (!token) {
-	logger.error(strings.log.token_error);
+// validate configuration
+const ajv = new Ajv();
+const validConfig = ajv.validate(require("./schemas/minecraftbotConfig.schema.json"), cfgs);
+if (!validConfig) {
+	logger.error("minecraftbot: invalid config.json");
+	logger.error(ajv.errorsText(null, { dataVar: "config" }));
 	process.exit(1);
 }
+
+// set language
+const strings: any = require("../languages/" + cfgs.language + ".json");
+
+// validates environmental variables
+if (!process.env.TOKEN) {
+	logger.error("minecraftbot: invalid environmental variables");
+}
+
+// configures the token
+const token: string = process.env.TOKEN;
 
 // creates the bot
 const bot: Client = new Client();
 
 // creates the server manager
-const mcport = cfgs.minecraft_port;
-const manager: ServerManager = new ServerManager(logger, cfgs.check_every_x_minutes);
-
+let manager: ServerManager = null;
+try {
+	manager = new ServerManager(logger, cfgs.check_every_x_minutes);
+} catch (e) {
+	logger.error(e);
+	process.exit(1);
+}
 
 /**
  * Handles bot on ready
@@ -136,7 +153,7 @@ bot.on("message", async message => {
 			return;
 		} else if (cmd === "stop") {
 			if (instance.State.Code === 16) { // code 16: running
-				MCServer.getInfo(instance.PublicIpAddress, mcport).then(result => {
+				MCServer.getInfo(instance.PublicIpAddress, cfgs.minecraft_port).then(result => {
 					if (result.players.online === 0) {
 						manager.closeServer(instance.PublicIpAddress);
 					} else {
@@ -152,7 +169,7 @@ bot.on("message", async message => {
 			return;
 		} else if (cmd === "stats") {
 			if (instance.State.Code === 16) { // code 16: running
-				MCServer.getInfo(instance.PublicIpAddress, mcport).then(result => {
+				MCServer.getInfo(instance.PublicIpAddress, cfgs.minecraft_port).then(result => {
 					let playernames: string = "";
 
 					if (result.players.list instanceof Array) {
@@ -230,7 +247,7 @@ function notifyInstanceStarting(statusMessage: Message): void {
  */
 function notifyMinecraftStarting(statusMessage: Message, ip: string): void {
 	logger.verbose("checking if minecraft has opened");
-	MCServer.getInfo(ip, mcport).then(result => {
+	MCServer.getInfo(ip, cfgs.minecraft_port).then(result => {
 		logger.verbose("server opened!");
 		statusMessage.edit(strings.messages.server_opened + " " + ip);
 	}).catch(err => {

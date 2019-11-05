@@ -21,6 +21,7 @@
     "nyc": "^14.1.1"
   },
   "dependencies": {
+    "ajv": "^6.10.2",
     "aws-sdk": "^2.562.0",
     "discord.js": "^11.5.1",
     "dotenv": "^8.0.0",
