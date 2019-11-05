@@ -5,10 +5,12 @@ const ssh: any = require('ssh-exec');
 
 import AWS from "aws-sdk";
 import EC2 from 'aws-sdk/clients/ec2';
+import IntervalManager from "./IntervalManager";
 
 export class ServerManager {
 
 	private logger: Logger = null;
+	private interval: IntervalManager = null;
 
 	private ec2: EC2 = null;
 	private instanceIDparam: { InstanceIds: string[] } = null;
@@ -19,9 +21,10 @@ export class ServerManager {
 	 * constructor
 	 * 
 	 * @param logger the winston Logger to use
-	 * @param checkEveryMin 
+	 * @param checkIntervalMinutes the interval to check if server should be closed (0 players),
+	 * if this is 0, won't check.
 	 */
-	public constructor(logger: Logger, checkEveryMin: number = 0) {
+	public constructor(logger: Logger, checkIntervalMinutes: number = 0) {
 		this.logger = logger;
 
 		this.mcport = Number.parseInt(process.env.MINECRAFT_PORT);
@@ -32,19 +35,16 @@ export class ServerManager {
 
 		this.instanceIDparam = { InstanceIds: [process.env.AWS_INSTANCEID] };
 
-		// sets checkShouldClose interval if it is set
-		if (checkEveryMin !== 0) {
-			setInterval(() => {
-				this.checkShouldClose();
-			}, checkEveryMin * 60 * 1000);
-		}
+		this.interval = new IntervalManager(() => {
+			this.checkShouldClose();
+		}, checkIntervalMinutes * 60);
 	}
 
 	/**
 	 * Checks if the server should be closed (no players), 
 	 * and closes it/shuts down the ec2 instance if it should
 	 */
-	public checkShouldClose(): void {
+	private checkShouldClose(): void {
 		this.logger.verbose("checking if server should be closed");
 		this.getInstance().then(instance => {
 			if (instance.State.Code === 16) { // code 16: running
@@ -58,6 +58,7 @@ export class ServerManager {
 					}
 				}).catch(err => {
 					this.logger.error(err);
+					this.logger.error("location: checkShouldClose getMCServerInfo");
 				});
 			}
 		}).catch(err => {
@@ -93,6 +94,7 @@ export class ServerManager {
 	public startInstance(): Promise<void> {
 		return new Promise((resolve, reject) => {
 			this.ec2.startInstances(this.instanceIDparam, (err, data) => {
+				this.interval.start();
 				if (err) {
 					return reject(err);
 				} else {
@@ -138,6 +140,10 @@ export class ServerManager {
 				this.ec2.stopInstances(this.instanceIDparam, (err, data) => {
 					if (err) {
 						this.logger.error(err);
+						this.logger.error("location: closeServer stopInstances");
+					} else {
+						this.interval.stop();
+						this.logger.info("shutdown signal sent");
 					}
 				});
 			}, 10000);

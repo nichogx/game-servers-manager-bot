@@ -139,6 +139,7 @@ bot.on("message", async message => {
 					});
 				}).catch(err => {
 					logger.error(err);
+					logger.error("location: open command");
 					message.channel.send(strings.messages.error_starting);
 				});
 			} else {
