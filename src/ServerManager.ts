@@ -1,11 +1,11 @@
 import { Logger } from "winston";
-import mc from 'minecraft-protocol';
 import { Instance } from "aws-sdk/clients/ec2";
 const ssh: any = require('ssh-exec');
 
 import AWS from "aws-sdk";
 import EC2 from 'aws-sdk/clients/ec2';
 import IntervalManager from "./IntervalManager";
+import { MCServer } from "./MCServer";
 
 export class ServerManager {
 
@@ -49,7 +49,7 @@ export class ServerManager {
 		this.getInstance().then(instance => {
 			if (instance.State.Code === 16) { // code 16: running
 				// instance is running
-				this.getMCServerInfo(instance.PublicIpAddress).then(result => {
+				MCServer.getInfo(instance.PublicIpAddress, this.mcport).then(result => {
 					if (result.players.online === 0) {
 						this.logger.info("server should be closed");
 						this.closeServer(instance.PublicIpAddress);
@@ -64,25 +64,6 @@ export class ServerManager {
 		}).catch(err => {
 			this.logger.error(err);
 			this.logger.error("location: checkShouldClose");
-		});
-	}
-
-	/**
-	 * Gets information from the given Minecraft server
-	 * 
-	 * @param ip the IP of the MC server
-	 * 
-	 * @returns the ping result as defined in minecraft-protocol
-	 */
-	public getMCServerInfo(ip: string): Promise<mc.NewPingResult> {
-		return new Promise((resolve, reject) => {
-			mc.ping({ host: ip, port: this.mcport }, (err, result: mc.NewPingResult) => {
-				if (err) {
-					reject(err);
-				} else {
-					resolve(result);
-				}
-			});
 		});
 	}
 

@@ -1,41 +1,18 @@
 // config environment
-import dotenv from 'dotenv';
+import dotenv from "dotenv";
 dotenv.config();
 
-import winston, { Logger } from 'winston';
-import { Client, Role, Message } from 'discord.js';
-import { ServerManager } from './ServerManager';
-import cfgs from '../config.json';
-import pjson from '../package.json';
-const strings: any = require('../languages/' + cfgs.language + '.json');
+import { Logger } from "winston";
+import { Client, Role, Message } from "discord.js";
+import { ServerManager } from "./ServerManager";
+import cfgs from "../config.json";
+import pjson from "../package.json";
+import { MCServer } from "./MCServer";
+import { LoggerFactory } from "./LoggerFactory";
+const strings: any = require("../languages/" + cfgs.language + ".json");
 
 // configures logger
-const logger: Logger = winston.createLogger({
-	format: winston.format.combine(
-		winston.format.timestamp({
-			format: 'YYYY-MM-DD HH:mm:ss'
-		}),
-		winston.format.errors({ stack: true }),
-		winston.format.colorize(),
-		winston.format.printf(info => `${info.timestamp} - ${info.level}: ${info.message}`)
-	),
-	transports: [
-		new winston.transports.Console({ level: 'debug' }),
-		new winston.transports.File({ filename: './logs/error.log', level: 'error' }),
-		new winston.transports.File({ filename: './logs/combined.log', level: 'verbose' })
-	],
-	exceptionHandlers: [
-		new winston.transports.Console(),
-		new winston.transports.File({ filename: 'logs/exceptions.log' }),
-	],
-	exitOnError: false
-});
-// make winston log unhandled rejections
-process.on('unhandledRejection', (reason, promise) => {
-	logger.error("unhandled promise rejection. Check exceptions.log");
-	if (reason) throw reason;
-	else throw { message: promise };
-});
+const logger: Logger = LoggerFactory.configureLogger();
 
 // configures the token
 const token: string = process.env.TOKEN;
@@ -50,13 +27,15 @@ const bot: Client = new Client();
 // creates the server manager
 const manager: ServerManager = new ServerManager(logger, cfgs.check_every_x_minutes);
 
+const mcPort = Number.parseInt(process.env.MINECRAFT_PORT);
+
 /**
  * Handles bot on ready
  */
 bot.on("ready", () => {
 	logger.info(strings.log.connected);
 	logger.info(strings.log.loggedin
-		.replace('<user>', bot.user.tag)
+		.replace("<user>", bot.user.tag)
 	);
 
 	bot.user.setActivity(pjson.description + " v" + pjson.version);
@@ -99,10 +78,10 @@ bot.on("message", async message => {
 
 	if (!message.isMentioned(bot.user)) return; // ignore if the message doesn't mention the bot
 
-	// command format is '[prfx]command arg1 arg2 arg3...'
+	// command format is "[prfx]command arg1 arg2 arg3..."
 	// on commands that need to have spaces in a single argument, the arguments can be joined in a single one.
 	// that is done inside the command treatment (if cmd ===...)
-	const fullcmd: string[] = message.content.split(' ').filter(el => el !== '');
+	const fullcmd: string[] = message.content.split(" ").filter(el => el !== "");
 	let cmd: string = fullcmd[1];
 	const args: string[] = fullcmd.slice(2);
 
@@ -157,7 +136,7 @@ bot.on("message", async message => {
 			return;
 		} else if (cmd === "stop") {
 			if (instance.State.Code === 16) { // code 16: running
-				manager.getMCServerInfo(instance.PublicIpAddress).then(result => {
+				MCServer.getInfo(instance.PublicIpAddress, mcPort).then(result => {
 					if (result.players.online === 0) {
 						manager.closeServer(instance.PublicIpAddress);
 					} else {
@@ -173,11 +152,11 @@ bot.on("message", async message => {
 			return;
 		} else if (cmd === "stats") {
 			if (instance.State.Code === 16) { // code 16: running
-				manager.getMCServerInfo(instance.PublicIpAddress).then(result => {
+				MCServer.getInfo(instance.PublicIpAddress, mcPort).then(result => {
 					let playernames: string = "";
 
-					if (result.players.sample instanceof Array) {
-						for (const player of result.players.sample) {
+					if (result.players.list instanceof Array) {
+						for (const player of result.players.list) {
 							playernames += player.name + "\n";
 						}
 					}
@@ -251,7 +230,7 @@ function notifyInstanceStarting(statusMessage: Message): void {
  */
 function notifyMinecraftStarting(statusMessage: Message, ip: string): void {
 	logger.verbose("checking if minecraft has opened");
-	manager.getMCServerInfo(ip).then(result => {
+	MCServer.getInfo(ip, mcPort).then(result => {
 		logger.verbose("server opened!");
 		statusMessage.edit(strings.messages.server_opened + " " + ip);
 	}).catch(err => {
