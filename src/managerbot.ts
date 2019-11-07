@@ -7,11 +7,10 @@ import { Client, Role, Message } from "discord.js";
 import Ajv from "ajv";
 import cfgs from "../config.json";
 import pjson from "../package.json";
-import { MCServer } from "./MCServer";
 import { LoggerFactory } from "./LoggerFactory";
 
-import { ServerManager, IServerConfig } from "./ServerManager";
-import { MinecraftServerManager } from "./MinecraftServerManager";
+import { ServerManager, IServerConfig, NotRunningError, TimeoutError, IServerInfo } from "./ServerManagers/ServerManager";
+import ServerManagerFactory from "./ServerManagers/ServerManagerFactory.js";
 
 // configures logger
 const logger: Logger = LoggerFactory.configureLogger();
@@ -46,11 +45,7 @@ let servers: { [name: string]: ServerManager } = {};
 for (const server of cfgs.servers) {
 	let manager: ServerManager = null;
 	try {
-		if (server.type === "minecraft") {
-			manager = new MinecraftServerManager(logger, cfgs.check_every_x_minutes, server);
-		} else {
-			throw new Error(server.type + ": unknown server type (not supported)");
-		}
+		manager = ServerManagerFactory.createServerManager(logger, cfgs.check_every_x_minutes, server);
 	} catch (e) {
 		logger.error(e);
 		process.exit(1);
@@ -120,16 +115,38 @@ bot.on("message", async message => {
 
 	if (!message.isMentioned(bot.user)) return; // ignore if the message doesn't mention the bot
 
-	// command format is "[prfx]command arg1 arg2 arg3..."
-	// on commands that need to have spaces in a single argument, the arguments can be joined in a single one.
-	// that is done inside the command treatment (if cmd ===...)
 	const fullcmd: string[] = message.content.split(" ").filter(el => el !== "");
-	let cmd: string = fullcmd[1];
-	const args: string[] = fullcmd.slice(2);
+	if (fullcmd.length === 1 || fullcmd[1] === "help") {
+		let sendText = strings.messages.command_format;
+		sendText += "\n" + strings.messages.command_list;
+		// TODO send command list
+		sendText += "\n" + strings.messages.server_list;
+		for (const server of Object.keys(servers)) {
+			sendText += "\n\t" + server;
+		}
+		message.channel.send(sendText);
+		return;
+	} else if (fullcmd.length !== 3 || !fullcmd[1].match(/^<@\d+>$/)) {
+		let sendText = strings.messages.invalid_command;
+		sendText += "\n" + strings.messages.command_format;
+		sendText += "\n" + strings.messages.for_help;
+		message.channel.send(sendText);
+		return;
+	}
 
-	let hasPermission: boolean = false;
+	const cmd: string = fullcmd[1];
+	const serverName: string = fullcmd[2];
 
-	for (let role of cfgs.permitted_roles) {
+	if (!servers[serverName]) {
+		message.channel.send(strings.messages.unknown_server.replace("<sname>", serverName));
+		return;
+	}
+
+	const server: ServerManager = servers[serverName];
+	const serverConfig: IServerConfig = server.getConfig();
+
+	let hasPermission = false;
+	for (let role of serverConfig.permittedRoles) {
 		let permRole: Role = message.guild.roles.find(val => val.name === role);
 		if (permRole && message.member.roles.has(permRole.id)) {
 			hasPermission = true;
@@ -137,32 +154,60 @@ bot.on("message", async message => {
 		}
 	}
 
-	if (!hasPermission) return;
-
-	logger.verbose(`received command '${cmd}' from ${message.author.username}`);
-	// commands that don't need the instance
-	if (cmd === "pack" || cmd === "modpack" || cmd === "link") {
-		logger.verbose("sending modpack link to user");
-		message.channel.send(strings.messages.modpack_link + cfgs.modpack_link);
-
+	if (!hasPermission) {
+		message.channel.send(strings.messages.no_permission);
 		return;
 	}
 
-	// commands that need the instance
-	manager.getInstance().then(instance => {
-		if (cmd === "open" || cmd === "start") {
+	logger.verbose(`received command '${cmd}' from ${message.author.username}`);
+	if (cmd === "pack" || cmd === "modpack" || cmd === "link") {
+		logger.verbose("sending modpack link to user");
+		message.channel.send(strings.messages.modpack_link + serverConfig.modpackLink);
+
+		return;
+	} else if (cmd === "stats") {
+		server.getInfo().then(result => {
+
+			message.channel.send(generateStatsEmbed(result));
+		}).catch(err => {
+			if (err instanceof NotRunningError) {
+				message.channel.send(strings.messages.instance_not_running);
+			} else {
+				logger.error(err);
+			}
+		});
+
+		return;
+	} else if (cmd === "stop") {
+		server.getInfo().then(result => {
+			if (result.players.online === 0) {
+				server.closeServer(result.ip);
+			} else {
+				logger.verbose("server not empty");
+				message.channel.send(strings.messages.server_not_empty + " " + result.players.online);
+			}
+		}).catch(err => {
+			if (err instanceof NotRunningError) {
+				logger.verbose("instance not running");
+				message.channel.send(strings.messages.instance_not_running);
+			}
+		});
+
+		return;
+	} else if (cmd === "open" || cmd === "start") {
+		server.getInstance().then(instance => {
 			logger.verbose("opening server");
 			if (instance.State.Code === 16) { // code 16: running
 				// instance is running
 				logger.verbose("instance already open, sending message");
 				message.channel.send(strings.messages.instance_started_waiting_server).then(msg => {
-					notifyMinecraftStarting(msg as Message, instance.PublicIpAddress);
+					notifyServerStarting(msg as Message, server);
 				});
 			} else if (instance.State.Code === 80) { // code 80: stopped
-				manager.startInstance().then((data) => {
+				server.startInstance().then((data) => {
 					logger.verbose("instance starting, sending message");
 					message.channel.send(strings.messages.instance_starting).then(msg => {
-						notifyInstanceStarting(msg as Message);
+						notifyInstanceStarting(msg as Message, server);
 					});
 				}).catch(err => {
 					logger.error(err);
@@ -175,64 +220,19 @@ bot.on("message", async message => {
 				message.channel.send(strings.messages.please_wait_instance_state);
 			}
 
-			return;
-		} else if (cmd === "stop") {
-			if (instance.State.Code === 16) { // code 16: running
-				MCServer.getInfo(instance.PublicIpAddress, cfgs.minecraft_port).then(result => {
-					if (result.players.online === 0) {
-						manager.closeServer(instance.PublicIpAddress);
-					} else {
-						logger.verbose("server not empty");
-						message.channel.send(strings.messages.server_not_empty + " " + result.players.online);
-					}
-				});
-			} else {
-				logger.verbose("instance not running");
-				message.channel.send(strings.messages.instance_not_running);
-			}
 
-			return;
-		} else if (cmd === "stats") {
-			if (instance.State.Code === 16) { // code 16: running
-				MCServer.getInfo(instance.PublicIpAddress, cfgs.minecraft_port).then(result => {
-					let playernames: string = "";
+		}).catch(err => {
+			logger.error(err);
+			logger.error("location: before commands");
+			message.channel.send(strings.messages.error_describing);
+		});
+		return;
+	} else {
+		logger.verbose(`unknown command '${cmd}'`);
 
-					if (result.players.list instanceof Array) {
-						for (const player of result.players.list) {
-							playernames += player.name + "\n";
-						}
-					}
+		return;
+	}
 
-					message.channel.send({
-						embed: {
-							color: 0x03DFFC,
-							author: {
-								name: "Players: " + result.players.online + "/" + result.players.max,
-							},
-							description: playernames,
-							footer: {
-								text: "IP: " + instance.PublicIpAddress
-							}
-						}
-					});
-				});
-
-				return;
-			} else {
-				message.channel.send(strings.messages.instance_not_running);
-
-				return;
-			}
-		} else {
-			logger.verbose(`unknown command '${cmd}'`);
-
-			return;
-		}
-	}).catch(err => {
-		logger.error(err);
-		logger.error("location: before commands");
-		message.channel.send(strings.messages.error_describing);
-	});
 });
 
 /**
@@ -240,18 +240,18 @@ bot.on("message", async message => {
  * 
  * @param statusMessage the message to update
  */
-function notifyInstanceStarting(statusMessage: Message): void {
+function notifyInstanceStarting(statusMessage: Message, server: ServerManager): void {
 	logger.verbose("checking if instance has started");
-	manager.getInstance().then(instance => {
+	server.getInstance().then(instance => {
 		if (instance.State.Code === 16) { // code 16: running
 			// instance is running
 			logger.verbose("instance now running, editing message and waiting for minecraft");
 			statusMessage.edit(strings.messages.instance_started_waiting_server).then(msg => {
-				notifyMinecraftStarting(msg, instance.PublicIpAddress);
+				notifyServerStarting(msg, server);
 			});
 		} else if (instance.State.Code === 0 || instance.State.Code === 80) { // code 0: starting, 80: stopped
 			logger.verbose("instance not running, checking again in 8 seconds.");
-			setTimeout(() => { notifyInstanceStarting(statusMessage) }, 8000); // 8 seconds
+			setTimeout(() => { notifyInstanceStarting(statusMessage, server) }, 8000); // 8 seconds
 		} else {
 			// other state
 			logger.verbose("unknown state " + instance.State.Code + " in notifyInstanceStarting, sending message");
@@ -270,21 +270,49 @@ function notifyInstanceStarting(statusMessage: Message): void {
  * @param statusMessage the message to update
  * @param ip the ip of the ec2 instance
  */
-function notifyMinecraftStarting(statusMessage: Message, ip: string): void {
+function notifyServerStarting(statusMessage: Message, server: ServerManager): void {
 	logger.verbose("checking if minecraft has opened");
-	MCServer.getInfo(ip, cfgs.minecraft_port).then(result => {
+	server.getInfo().then(result => {
 		logger.verbose("server opened!");
-		statusMessage.edit(strings.messages.server_opened + " " + ip);
+		statusMessage.edit(strings.messages.server_opened, generateStatsEmbed(result));
 	}).catch(err => {
 		logger.verbose("getInfo rejected.");
-		if (err.code === "ETIMEDOUT") {
-			logger.verbose("server still opening, checking again in 20 seconds: " + err.code);
-			notifyMinecraftStarting(statusMessage, ip);
+		if (err instanceof TimeoutError) {
+			logger.verbose("server still opening, checking again in 20 seconds: " + err.message);
+			notifyServerStarting(statusMessage, server);
 		} else {
-			logger.verbose("error, checking again in 20 seconds: " + err.code);
-			setTimeout(() => { notifyMinecraftStarting(statusMessage, ip) }, 20000); // 20 seconds
+			logger.verbose("error, checking again in 20 seconds: " + err.message);
+			setTimeout(() => { notifyServerStarting(statusMessage, server) }, 20000); // 20 seconds
 		}
 	});
+}
+
+function generateStatsEmbed(serverInfo: IServerInfo) {
+	let playernames: string = "";
+
+	if (serverInfo.players.list instanceof Array) {
+		for (const player of serverInfo.players.list) {
+			playernames += player + "\n";
+		}
+	}
+
+	let onlinePlayersString = "Players: " + serverInfo.players.online;
+	if (serverInfo.players.max) {
+		onlinePlayersString += "/" + serverInfo.players.max;
+	}
+
+	return {
+		embed: {
+			color: 0x03DFFC,
+			author: {
+				name: onlinePlayersString
+			},
+			description: playernames,
+			footer: {
+				text: `IP: ${serverInfo.ip}\nPORT: ${serverInfo.port}`
+			}
+		}
+	}
 }
 
 // bot login, keep at the end!

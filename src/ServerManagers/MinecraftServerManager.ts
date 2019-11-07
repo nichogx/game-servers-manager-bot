@@ -1,5 +1,4 @@
-import { ServerManager, IServerConfig, IServerInfo } from "./ServerManager";
-import { MCServer } from "./MCServer";
+import { ServerManager, IServerConfig, IServerInfo, NotRunningError, TimeoutError } from "./ServerManager";
 import { Logger } from "winston";
 
 import mc, { NewPingResult } from 'minecraft-protocol';
@@ -34,7 +33,7 @@ export class MinecraftServerManager extends ServerManager {
 		this.getInstance().then(instance => {
 			if (instance.State.Code === 16) { // code 16: running
 				// instance is running
-				MCServer.getInfo(instance.PublicIpAddress, this.configs.port).then(result => {
+				this.getInfo().then(result => {
 					if (result.players.online === 0) {
 						this.logger.info(this.serverName + ": server should be closed");
 						this.closeServer(instance.PublicIpAddress);
@@ -58,19 +57,19 @@ export class MinecraftServerManager extends ServerManager {
 			this.getInstance().then(instance => {
 				if (instance.State.Code !== 16) {
 					// not running
-					return reject("NOTRUNNING");
+					return reject(new NotRunningError());
 				}
 
 				// this timeout is a hack to makeup for the fact that the library 
 				// sometimes doesn't call the callback
 				const timeout = setTimeout(() => {
-					reject("CUSTOMTIMEOUT");
+					reject(new TimeoutError());
 				}, 20000); // 20 seconds
 
 				mc.ping({ host: instance.PublicIpAddress, port: this.configs.port }, (err: any, result: NewPingResult) => {
 					if (err) {
 						clearTimeout(timeout);
-						return reject(err.code);
+						return reject(new Error(err.code));
 					} else {
 						clearTimeout(timeout);
 						return resolve({

@@ -3,7 +3,21 @@ import { Instance } from "aws-sdk/clients/ec2";
 
 import AWS from "aws-sdk";
 import EC2 from 'aws-sdk/clients/ec2';
-import IntervalManager from "./IntervalManager";
+import IntervalManager from "../IntervalManager";
+
+export class NotRunningError extends Error {
+    constructor(...args: any[]) {
+        super(...args);
+        Error.captureStackTrace(this, NotRunningError);
+    }
+}
+
+export class TimeoutError extends Error {
+    constructor(...args: any[]) {
+        super(...args);
+        Error.captureStackTrace(this, TimeoutError);
+    }
+}
 
 export interface IServerConfig {
 	name: string,
@@ -54,8 +68,17 @@ export abstract class ServerManager {
 
 	/**
 	 * Gets information from the server
+	 * 
+	 * Can reject with NotRunningError or TimeoutError
 	 */
 	public abstract getInfo(): Promise<IServerInfo>;
+
+	/**
+	 * Gets the IServerConfig for this server
+	 */
+	public getConfig(): IServerConfig {
+		return this.configs;
+	}
 
 	/**
 	 * constructor
@@ -63,6 +86,7 @@ export abstract class ServerManager {
 	 * @param logger the winston Logger to use
 	 * @param checkIntervalMinutes the interval to check if server should be closed (0 players),
 	 * if this is 0, won't check.
+	 * @param configs the IServerConfig for this server
 	 */
 	public constructor(logger: Logger, checkIntervalMinutes: number = 0, configs: IServerConfig) {
 		this.logger = logger;

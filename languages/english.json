@@ -7,6 +7,14 @@
 		"token_error": "Error, please put your token in the .env file!"
 	},
 	"messages": {
+		"invalid_command": "Invalid command.",
+		"command_format": "The format of the commands is: <atbot> <command> [server name].",
+		"for_help": "For help, use the help command.",
+		"command_list": "Command list:",
+		"server_list": "Server list:",
+		"unknown_server": "Unknown server '<sname>'.",
+		"no_permission": "You do not have the necessary permissions to manage this server.",
+
 		"already_open": "The server is already open. IP:",
 		"please_wait_instance_state": "Please wait. Something wrong is happening with the AWS virtual machine. Wait a bit or call <@184075556017537025>.",
 		"instance_starting": "Starting AWS virtual machine... Please wait...",
