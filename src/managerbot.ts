@@ -5,11 +5,13 @@ dotenv.config();
 import { Logger } from "winston";
 import { Client, Role, Message } from "discord.js";
 import Ajv from "ajv";
-import { ServerManager } from "./ServerManager";
 import cfgs from "../config.json";
 import pjson from "../package.json";
 import { MCServer } from "./MCServer";
 import { LoggerFactory } from "./LoggerFactory";
+
+import { ServerManager } from "./ServerManager";
+import { MinecraftServerManager } from "./MinecraftServerManager";
 
 // configures logger
 const logger: Logger = LoggerFactory.configureLogger();
@@ -40,7 +42,7 @@ const bot: Client = new Client();
 // creates the server manager
 let manager: ServerManager = null;
 try {
-	manager = new ServerManager(logger, cfgs.check_every_x_minutes);
+	manager = new MinecraftServerManager(logger, cfgs.check_every_x_minutes);
 } catch (e) {
 	logger.error(e);
 	process.exit(1);
