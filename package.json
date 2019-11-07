@@ -27,7 +27,7 @@
     "dotenv": "^8.0.0",
     "minecraft-protocol": "^1.9.4",
     "ssh-exec": "^2.0.0",
-    "typescript": "^3.6.4",
+    "typescript": "^3.7.2",
     "winston": "^3.2.1"
   }
 }

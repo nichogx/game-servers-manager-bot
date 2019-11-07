@@ -8,5 +8,7 @@
         "**/*.js.map": {
             "when": "$(basename)"
         }
-    }
+    },
+    "typescript.format.enable": true,
+    "typescript.format.semicolons": "insert"
 }

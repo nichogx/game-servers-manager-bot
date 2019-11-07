@@ -224,12 +224,12 @@ function notifyInstanceStarting(statusMessage: Message): void {
 			statusMessage.edit(strings.messages.instance_started_waiting_server).then(msg => {
 				notifyMinecraftStarting(msg, instance.PublicIpAddress);
 			});
-		} else if (instance.State.Code === 0) { // code 0: starting
+		} else if (instance.State.Code === 0 || instance.State.Code === 80) { // code 0: starting, 80: stopped
 			logger.verbose("instance not running, checking again in 8 seconds.");
 			setTimeout(() => { notifyInstanceStarting(statusMessage) }, 8000); // 8 seconds
 		} else {
 			// other state
-			logger.verbose("unknown state in notifyInstanceStarting, sending message");
+			logger.verbose("unknown state " + instance.State.Code + " in notifyInstanceStarting, sending message");
 			statusMessage.channel.send(strings.messages.please_wait_instance_state + " in notifyInstanceStarting");
 		}
 	}).catch(err => {
