@@ -51,7 +51,7 @@ This bot started out as a Minecraft-only server management bot. It was refactore
 
 For the moment, the only supported game is Minecraft.
 
-See [planned features](#planned-features) for a list of planned games.
+See [planned features](#planned-features-and-changes) for a list of planned games.
 
 ## Can you do/fix X?
 I can certainly try my best.
@@ -64,9 +64,10 @@ To contribute, just open a pull request and I will review!
 
 The files for translating are in the languages folder. Just copy the english.json file and change it into your language. Thank you! :D
 
-## Planned features
+## Planned features and changes
 - maybe use RCON instead of SSH to send /stop command to minecraft server
 - add support for ARK: Survival Evolved
+- change bot to use custom status as soon as it's released for bot users (depends on discord devs, not me)
 
 ## Known bugs and issues
 - the help command does not send the command list. This is a TODO because it will require refactoring the way commands are handled in order to do properly.

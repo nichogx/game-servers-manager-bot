@@ -1,7 +1,7 @@
 {
-  "name": "minecraftmanagerbot",
-  "version": "1.0.0",
-  "description": "Minecraft Manager Bot",
+  "name": "game-servers-manager-bot",
+  "version": "1.0.0-beta.0",
+  "description": "Server Manager Bot",
   "main": "src/managerbot.js",
   "scripts": {
     "test": "mocha --timeout 10000 test",
