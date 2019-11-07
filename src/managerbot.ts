@@ -15,15 +15,7 @@ import ServerManagerFactory from "./ServerManagers/ServerManagerFactory.js";
 // configures logger
 const logger: Logger = LoggerFactory.configureLogger();
 
-// validate configuration
-const ajv = new Ajv();
-const validConfig = ajv.validate(require("./schemas/minecraftbotConfig.schema.json"), cfgs);
-if (!validConfig) {
-	logger.error("minecraftbot: invalid config.json");
-	logger.error(ajv.errorsText(null, { dataVar: "config" }));
-	process.exit(1);
-}
-
+// TODO validate language file exists
 // set language
 const strings: any = require("../languages/" + cfgs.language + ".json");
 
@@ -58,10 +50,8 @@ for (const server of cfgs.servers) {
  * Handles bot on ready
  */
 bot.on("ready", () => {
-	logger.info(strings.log.connected);
-	logger.info(strings.log.loggedin
-		.replace("<user>", bot.user.tag)
-	);
+	logger.info("\rConnecting... Connected!");
+	logger.info("Logged in as " + bot.user.tag);
 
 	bot.user.setActivity(pjson.description + " v" + pjson.version);
 
@@ -85,7 +75,7 @@ bot.on("ready", () => {
  * Handles error events
  */
 bot.on("error", error => {
-	logger.error(strings.log.unhandled_error);
+	logger.error("unhandled bot error");
 	if (error.message) {
 		logger.error(error.message);
 	}
@@ -95,7 +85,7 @@ bot.on("error", error => {
  * Handles reconnecting events
  */
 bot.on("reconnecting", () => {
-	logger.info(strings.log.reconnecting);
+	logger.info("reconnecting...");
 });
 
 /**
@@ -117,19 +107,19 @@ bot.on("message", async message => {
 
 	const fullcmd: string[] = message.content.split(" ").filter(el => el !== "");
 	if (fullcmd.length === 1 || fullcmd[1] === "help") {
-		let sendText = strings.messages.command_format;
-		sendText += "\n" + strings.messages.command_list;
+		let sendText = strings.command_format;
+		sendText += "\n" + strings.command_list;
 		// TODO send command list
-		sendText += "\n" + strings.messages.server_list;
+		sendText += "\n" + strings.server_list;
 		for (const server of Object.keys(servers)) {
 			sendText += "\n\t" + server;
 		}
 		message.channel.send(sendText);
 		return;
 	} else if (fullcmd.length !== 3 || !fullcmd[1].match(/^<@\d+>$/)) {
-		let sendText = strings.messages.invalid_command;
-		sendText += "\n" + strings.messages.command_format;
-		sendText += "\n" + strings.messages.for_help;
+		let sendText = strings.invalid_command;
+		sendText += "\n" + strings.command_format;
+		sendText += "\n" + strings.for_help;
 		message.channel.send(sendText);
 		return;
 	}
@@ -138,7 +128,7 @@ bot.on("message", async message => {
 	const serverName: string = fullcmd[2];
 
 	if (!servers[serverName]) {
-		message.channel.send(strings.messages.unknown_server.replace("<sname>", serverName));
+		message.channel.send(strings.unknown_server.replace("<sname>", serverName));
 		return;
 	}
 
@@ -155,14 +145,14 @@ bot.on("message", async message => {
 	}
 
 	if (!hasPermission) {
-		message.channel.send(strings.messages.no_permission);
+		message.channel.send(strings.no_permission);
 		return;
 	}
 
 	logger.verbose(`received command '${cmd}' from ${message.author.username}`);
 	if (cmd === "pack" || cmd === "modpack" || cmd === "link") {
 		logger.verbose("sending modpack link to user");
-		message.channel.send(strings.messages.modpack_link + serverConfig.modpackLink);
+		message.channel.send(strings.modpack_link + serverConfig.modpackLink);
 
 		return;
 	} else if (cmd === "stats") {
@@ -171,7 +161,7 @@ bot.on("message", async message => {
 			message.channel.send(generateStatsEmbed(result));
 		}).catch(err => {
 			if (err instanceof NotRunningError) {
-				message.channel.send(strings.messages.instance_not_running);
+				message.channel.send(strings.instance_not_running);
 			} else {
 				logger.error(err);
 			}
@@ -184,12 +174,12 @@ bot.on("message", async message => {
 				server.closeServer(result.ip);
 			} else {
 				logger.verbose("server not empty");
-				message.channel.send(strings.messages.server_not_empty + " " + result.players.online);
+				message.channel.send(strings.server_not_empty + " " + result.players.online);
 			}
 		}).catch(err => {
 			if (err instanceof NotRunningError) {
 				logger.verbose("instance not running");
-				message.channel.send(strings.messages.instance_not_running);
+				message.channel.send(strings.instance_not_running);
 			}
 		});
 
@@ -200,31 +190,31 @@ bot.on("message", async message => {
 			if (instance.State.Code === 16) { // code 16: running
 				// instance is running
 				logger.verbose("instance already open, sending message");
-				message.channel.send(strings.messages.instance_started_waiting_server).then(msg => {
+				message.channel.send(strings.instance_started_waiting_server).then(msg => {
 					notifyServerStarting(msg as Message, server);
 				});
 			} else if (instance.State.Code === 80) { // code 80: stopped
 				server.startInstance().then((data) => {
 					logger.verbose("instance starting, sending message");
-					message.channel.send(strings.messages.instance_starting).then(msg => {
+					message.channel.send(strings.instance_starting).then(msg => {
 						notifyInstanceStarting(msg as Message, server);
 					});
 				}).catch(err => {
 					logger.error(err);
 					logger.error("location: open command");
-					message.channel.send(strings.messages.error_starting);
+					message.channel.send(strings.error_starting);
 				});
 			} else {
 				// other state
 				logger.verbose("unknown state, sending message");
-				message.channel.send(strings.messages.please_wait_instance_state);
+				message.channel.send(strings.please_wait_instance_state);
 			}
 
 
 		}).catch(err => {
 			logger.error(err);
 			logger.error("location: before commands");
-			message.channel.send(strings.messages.error_describing);
+			message.channel.send(strings.error_describing);
 		});
 		return;
 	} else {
@@ -246,7 +236,7 @@ function notifyInstanceStarting(statusMessage: Message, server: ServerManager): 
 		if (instance.State.Code === 16) { // code 16: running
 			// instance is running
 			logger.verbose("instance now running, editing message and waiting for minecraft");
-			statusMessage.edit(strings.messages.instance_started_waiting_server).then(msg => {
+			statusMessage.edit(strings.instance_started_waiting_server).then(msg => {
 				notifyServerStarting(msg, server);
 			});
 		} else if (instance.State.Code === 0 || instance.State.Code === 80) { // code 0: starting, 80: stopped
@@ -255,12 +245,12 @@ function notifyInstanceStarting(statusMessage: Message, server: ServerManager): 
 		} else {
 			// other state
 			logger.verbose("unknown state " + instance.State.Code + " in notifyInstanceStarting, sending message");
-			statusMessage.channel.send(strings.messages.please_wait_instance_state + " in notifyInstanceStarting");
+			statusMessage.channel.send(strings.please_wait_instance_state + " in notifyInstanceStarting");
 		}
 	}).catch(err => {
 		logger.error(err);
 		logger.error("location: notifyInstanceStarting");
-		statusMessage.channel.send(strings.messages.error_describing);
+		statusMessage.channel.send(strings.error_describing);
 	});
 }
 
@@ -274,7 +264,7 @@ function notifyServerStarting(statusMessage: Message, server: ServerManager): vo
 	logger.verbose("checking if minecraft has opened");
 	server.getInfo().then(result => {
 		logger.verbose("server opened!");
-		statusMessage.edit(strings.messages.server_opened, generateStatsEmbed(result));
+		statusMessage.edit(strings.server_opened, generateStatsEmbed(result));
 	}).catch(err => {
 		logger.verbose("getInfo rejected.");
 		if (err instanceof TimeoutError) {
@@ -316,6 +306,7 @@ function generateStatsEmbed(serverInfo: IServerInfo) {
 }
 
 // bot login, keep at the end!
+logger.info("Connecting...");
 bot.login(token)
 	.catch((errmsg) => {
 		logger.error("Error logging in.\n" + errmsg);
