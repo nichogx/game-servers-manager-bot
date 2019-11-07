@@ -1,6 +1,6 @@
 {
 	"invalid_command": "Comando inválido.",
-	"command_format": "O formato dos comandos é: <atbot> <comando> [nome do servidor].",
+	"command_format": "O formato dos comandos é: `<atbot> <comando> [nome do servidor]`.",
 	"for_help": "Para ajuda, use o comando help.",
 	"command_list": "Lista de comandos:",
 	"server_list": "Lista de servidores:",
@@ -10,10 +10,12 @@
 	"please_wait_instance_state": "Por favor aguarde. Algo de errado está acontecendo com a máquina virtual na AWS. Perae ou chama o <@184075556017537025>.",
 	"instance_starting": "Iniciando máquina virtual na AWS... Por favor aguarde...",
 	"instance_started_waiting_server": "Máquina virtual inicializada... Iniciando servidor de minecraft...",
-	"server_opened": "Servidor aberto. IP: ",
+	"server_opened": "Servidor aberto.",
 	"instance_not_running": "O servidor não está aberto",
 	"server_not_empty": "O servidor não está vazio. Players: ",
 	"modpack_link": "Você precisa da versão mais nova do Forge 1.12.2\nLink do modpack: ",
 	"error_describing": "<@184075556017537025> deu ruim aqui: error describing instance",
-	"error_starting": "<@184075556017537025> deu ruim aqui: error starting instance"
+	"error_starting": "<@184075556017537025> deu ruim aqui: error starting instance",
+	"server_closing": "Fechando servidor.",
+	"shutdown_signal_sent": "Sinal de shutdown enviado."
 }

@@ -14,6 +14,7 @@ import ServerManagerFactory from "./ServerManagers/ServerManagerFactory.js";
 
 // configures logger
 const logger: Logger = LoggerFactory.configureLogger();
+logger.info("Starting bot");
 
 // TODO validate language file exists
 // set language
@@ -50,7 +51,7 @@ for (const server of cfgs.servers) {
  * Handles bot on ready
  */
 bot.on("ready", () => {
-	logger.info("\rConnecting... Connected!");
+	logger.info("Connected!");
 	logger.info("Logged in as " + bot.user.tag);
 
 	bot.user.setActivity(pjson.description + " v" + pjson.version);
@@ -116,7 +117,7 @@ bot.on("message", async message => {
 		}
 		message.channel.send(sendText);
 		return;
-	} else if (fullcmd.length !== 3 || !fullcmd[1].match(/^<@\d+>$/)) {
+	} else if (fullcmd.length !== 3 || !fullcmd[0].match(/^<@\d+>$/)) {
 		let sendText = strings.invalid_command;
 		sendText += "\n" + strings.command_format;
 		sendText += "\n" + strings.for_help;
@@ -151,7 +152,7 @@ bot.on("message", async message => {
 
 	logger.verbose(`received command '${cmd}' from ${message.author.username}`);
 	if (cmd === "pack" || cmd === "modpack" || cmd === "link") {
-		logger.verbose("sending modpack link to user");
+		logger.verbose(serverName + ": sending modpack link to user");
 		message.channel.send(strings.modpack_link + serverConfig.modpackLink);
 
 		return;
@@ -171,7 +172,11 @@ bot.on("message", async message => {
 	} else if (cmd === "stop") {
 		server.getInfo().then(result => {
 			if (result.players.online === 0) {
-				server.closeServer(result.ip);
+				message.channel.send(strings.server_closing).then((sentMsg: Message) => {
+					server.closeServer().then(() => {
+						sentMsg.edit(strings.shutdown_signal_sent);
+					});
+				});
 			} else {
 				logger.verbose("server not empty");
 				message.channel.send(strings.server_not_empty + " " + result.players.online);
@@ -180,6 +185,8 @@ bot.on("message", async message => {
 			if (err instanceof NotRunningError) {
 				logger.verbose("instance not running");
 				message.channel.send(strings.instance_not_running);
+			} else {
+				logger.error(err);
 			}
 		});
 

@@ -1,6 +1,6 @@
 {
 	"invalid_command": "Invalid command.",
-	"command_format": "The format of the commands is: <atbot> <command> [server name].",
+	"command_format": "The format of the commands is: `<atbot> <command> [server name]`.",
 	"for_help": "For help, use the help command.",
 	"command_list": "Command list:",
 	"server_list": "Server list:",
@@ -10,10 +10,12 @@
 	"please_wait_instance_state": "Please wait. Something wrong is happening with the AWS virtual machine. Wait a bit or call <@184075556017537025>.",
 	"instance_starting": "Starting AWS virtual machine... Please wait...",
 	"instance_started_waiting_server": "Virtual machine started... Starting Minecraft server...",
-	"server_opened": "Server open. IP: ",
+	"server_opened": "Server open.",
 	"instance_not_running": "The server is not open",
 	"server_not_empty": "The server is not empty. Players: ",
 	"modpack_link": "You need the newest version of Forge 1.12.2\nModpack link: ",
 	"error_describing": "<@184075556017537025> something's wrong here: error describing instance",
-	"error_starting": "<@184075556017537025> something's wrong here: error starting instance"
+	"error_starting": "<@184075556017537025> something's wrong here: error starting instance",
+	"server_closing": "Closing server.",
+	"shutdown_signal_sent": "Shutdown signal sent."
 }

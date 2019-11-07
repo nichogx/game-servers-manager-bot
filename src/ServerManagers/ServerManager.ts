@@ -64,7 +64,7 @@ export abstract class ServerManager {
 	 * 
 	 * @param ip the IP of the ec2 instance
 	 */
-	public abstract closeServer(ip: string): void;
+	public abstract closeServer(): Promise<void>;
 
 	/**
 	 * Gets information from the server

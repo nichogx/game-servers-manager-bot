@@ -10,21 +10,30 @@ export class MinecraftServerManager extends ServerManager {
 		super(logger, checkIntervalMinutes, configs);
 	}
 
-	public closeServer(ip: string): void {
-		super.logger.info(this.serverName + ": sending stop command");
-		ssh(this.configs.closeScriptPath, {
-			user: this.configs.sshUser,
-			host: ip,
-			key: this.configs.sshKeyPath
-		}, () => {
-			super.logger.info(this.serverName + ": shutting down server in 10 seconds");
-			setTimeout(() => {
-				super.stopInstance().then(() => {
-					super.logger.info(this.serverName + ": shutdown signal sent");
-				}).catch(err => {
-					super.logger.error(err);
-				});
-			}, 10000);
+	public closeServer(): Promise<void> {
+		return new Promise((resolve, reject) => {
+			this.logger.info(this.serverName + ": attempting to close server");
+			this.getInstance().then(instance => {
+				if (instance.State.Code === 16) { // code 16: running
+					this.logger.info(this.serverName + ": sending stop command");
+					ssh(this.configs.closeScriptPath, {
+						user: this.configs.sshUser,
+						host: instance.PublicIpAddress,
+						key: this.configs.sshKeyPath
+					}, () => {
+						this.logger.info(this.serverName + ": shutting down server in 10 seconds");
+						setTimeout(() => {
+							this.stopInstance().then(() => {
+								resolve();
+							}).catch(err => {
+								reject(err);
+							});
+						}, 10000);
+					});
+				} else {
+					reject(new NotRunningError("server is not running, can't be closed"));
+				}
+			});
 		});
 	}
 
@@ -36,7 +45,7 @@ export class MinecraftServerManager extends ServerManager {
 				this.getInfo().then(result => {
 					if (result.players.online === 0) {
 						this.logger.info(this.serverName + ": server should be closed");
-						this.closeServer(instance.PublicIpAddress);
+						this.closeServer();
 					} else {
 						this.logger.verbose(this.serverName + ": server should not be closed");
 					}
@@ -57,13 +66,13 @@ export class MinecraftServerManager extends ServerManager {
 			this.getInstance().then(instance => {
 				if (instance.State.Code !== 16) {
 					// not running
-					return reject(new NotRunningError());
+					return reject(new NotRunningError("server is not running, can't get info"));
 				}
 
 				// this timeout is a hack to makeup for the fact that the library 
 				// sometimes doesn't call the callback
 				const timeout = setTimeout(() => {
-					reject(new TimeoutError());
+					reject(new TimeoutError("getInfo timed out"));
 				}, 20000); // 20 seconds
 
 				mc.ping({ host: instance.PublicIpAddress, port: this.configs.port }, (err: any, result: NewPingResult) => {
@@ -72,15 +81,20 @@ export class MinecraftServerManager extends ServerManager {
 						return reject(new Error(err.code));
 					} else {
 						clearTimeout(timeout);
-						return resolve({
+						const serverInfo: IServerInfo = {
 							players: {
 								online: result.players.online,
-								max: result.players.max,
-								list: result.players.sample.map(x => x.name)
+								max: result.players.max
 							},
 							ip: instance.PublicIpAddress,
 							port: this.configs.port
-						});
+						};
+
+						if (result.players.sample instanceof Array) {
+							serverInfo.players.list = result.players.sample.map(x => x.name);
+						}
+
+						return resolve(serverInfo);
 					}
 				});
 			});
