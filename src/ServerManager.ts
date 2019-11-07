@@ -159,4 +159,11 @@ export class ServerManager {
 			}, 10000);
 		});
 	}
+
+	/**
+	 * Starts the interval
+	 */
+	public startInterval() {
+		this.interval.start();
+	}
 }

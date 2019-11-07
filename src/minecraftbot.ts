@@ -59,6 +59,16 @@ bot.on("ready", () => {
 
 	// reset activity once every half hour (sometimes it weirds out)
 	setInterval(() => bot.user.setActivity(pjson.description + " v" + pjson.version), 1800000);
+
+	// check if server is open. If it is, start close check timer
+	manager.getInstance().then((instance) => {
+		if (instance.State.Code === 16) { // running
+			logger.verbose("instance running, manually starting interval");
+			manager.startInterval();
+		} else {
+			logger.verbose("instance not running");
+		}
+	});
 });
 
 /**
