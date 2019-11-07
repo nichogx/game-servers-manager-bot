@@ -1,0 +1,126 @@
+{
+	"definitions": {},
+	"$schema": "http://json-schema.org/draft-07/schema#",
+	"type": "object",
+	"title": "The Root Schema",
+	"required": [
+	  "language",
+	  "check_every_x_minutes",
+	  "servers"
+	],
+	"properties": {
+	  "language": {
+		"$id": "#/properties/language",
+		"type": "string",
+		"title": "The Language Schema",
+		"default": "",
+		"pattern": "^(.*)$"
+	  },
+	  "check_every_x_minutes": {
+		"$id": "#/properties/check_every_x_minutes",
+		"type": "integer",
+		"title": "The Check_every_x_minutes Schema",
+		"default": 0
+	  },
+	  "servers": {
+		"$id": "#/properties/servers",
+		"type": "array",
+		"title": "The Servers Schema",
+		"items": {
+		  "$id": "#/properties/servers/items",
+		  "type": "object",
+		  "title": "The Items Schema",
+		  "required": [
+			"name",
+			"type",
+			"instanceId",
+			"port",
+			"awsRegion",
+			"sshUser",
+			"sshKeyPath",
+			"modpackLink",
+			"closeScriptPath",
+			"permittedRoles"
+		  ],
+		  "properties": {
+			"name": {
+			  "$id": "#/properties/servers/items/properties/name",
+			  "type": "string",
+			  "title": "The Name Schema",
+			  "default": "",
+			  "pattern": "^(.*)$"
+			},
+			"type": {
+			  "$id": "#/properties/servers/items/properties/type",
+			  "type": "string",
+			  "title": "The Type Schema",
+			  "default": "",
+			  "pattern": "^(.*)$"
+			},
+			"instanceId": {
+			  "$id": "#/properties/servers/items/properties/instanceId",
+			  "type": "string",
+			  "title": "The Instanceid Schema",
+			  "default": "",
+			  "pattern": "^i-(\\w*)"
+			},
+			"port": {
+			  "$id": "#/properties/servers/items/properties/port",
+			  "type": "integer",
+			  "title": "The Port Schema",
+			  "default": 0
+			},
+			"awsRegion": {
+			  "$id": "#/properties/servers/items/properties/awsRegion",
+			  "type": "string",
+			  "title": "The Awsregion Schema",
+			  "default": "",
+			  "pattern": "^(.*)$"
+			},
+			"sshUser": {
+			  "$id": "#/properties/servers/items/properties/sshUser",
+			  "type": "string",
+			  "title": "The Sshuser Schema",
+			  "default": "",
+			  "pattern": "^(.*)$"
+			},
+			"sshKeyPath": {
+			  "$id": "#/properties/servers/items/properties/sshKeyPath",
+			  "type": "string",
+			  "title": "The Sshkeypath Schema",
+			  "default": "",
+			  "pattern": "^(.*)$"
+			},
+			"modpackLink": {
+			  "$id": "#/properties/servers/items/properties/modpackLink",
+			  "type": "string",
+			  "title": "The Modpacklink Schema",
+			  "default": "",
+			  "pattern": "^(.*)$",
+			  "format": "uri"
+			},
+			"closeScriptPath": {
+			  "$id": "#/properties/servers/items/properties/closeScriptPath",
+			  "type": "string",
+			  "title": "The Closescriptpath Schema",
+			  "default": "",
+			  "pattern": "^(.*)$"
+			},
+			"permittedRoles": {
+			  "$id": "#/properties/servers/items/properties/permittedRoles",
+			  "type": "array",
+			  "title": "The Permittedroles Schema",
+			  "items": {
+				"$id": "#/properties/servers/items/properties/permittedRoles/items",
+				"type": "string",
+				"title": "The Items Schema",
+				"default": "",
+				"pattern": "^(.*)$"
+			  }
+			}
+		  }
+		}
+	  }
+	}
+  }
+  

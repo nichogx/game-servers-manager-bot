@@ -16,9 +16,21 @@ import ServerManagerFactory from "./ServerManagers/ServerManagerFactory.js";
 const logger: Logger = LoggerFactory.configureLogger();
 logger.info("Starting bot");
 
-// TODO validate language file exists
+const ajv = new Ajv();
+if (!ajv.validate(require("./schemas/managerBotConfig.schema.json"), cfgs)) {
+	logger.error("invalid config file");
+	logger.error(ajv.errorsText(null, { dataVar: "configs" }));
+	process.exit(1);
+}
+
 // set language
-const strings: any = require("../languages/" + cfgs.language + ".json");
+let strings: any;
+try {
+	strings = require("../languages/" + cfgs.language + ".json");
+} catch (e) {
+	logger.error("file ../languages/" + cfgs.language + ".json cannot be opened");
+	process.exit(1);
+}
 
 // validates environmental variables
 if (!process.env.TOKEN) {
@@ -30,8 +42,6 @@ const token: string = process.env.TOKEN;
 
 // creates the bot
 const bot: Client = new Client();
-
-// TODO validate the config file
 
 // creates the server managers
 let servers: { [name: string]: ServerManager } = {};

@@ -65,10 +65,8 @@ To contribute, just open a pull request and I will review!
 The files for translating are in the languages folder. Just copy the english.json file and change it into your language. Thank you! :D
 
 ## Planned features
-- validate config.json (was implemented but lost on refactor)
-- use RCON instead of SSH to send /stop command to minecraft server
+- maybe use RCON instead of SSH to send /stop command to minecraft server
 - add support for ARK: Survival Evolved
 
 ## Known bugs and issues
-- undefined behaviour if the data in config.json is not valid (this will be fixed soon)
 - the help command does not send the command list. This is a TODO because it will require refactoring the way commands are handled in order to do properly.
