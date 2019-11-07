@@ -11,9 +11,13 @@ It also checks the number of players every 15 minutes (configurable), and if the
 - stats command to check IP and online players without opening the game
 - stop server and shutdown instance via Discord
 - modpack command which will reply with the modpack download link (optional)
+- manage *multiple servers*! Multiple instances, multiple games, and multiple servers of the same game! You can even setup which members of your server can manage each server!
 
 ## Commands
 All commands are used like: `@bot <command> [servername]`
+#### help
+Bot will reply with a list of commands and servers configured
+
 #### modpack
 Bot will reply with the modpack download link
 
@@ -61,8 +65,10 @@ To contribute, just open a pull request and I will review!
 The files for translating are in the languages folder. Just copy the english.json file and change it into your language. Thank you! :D
 
 ## Planned features
+- validate config.json (was implemented but lost on refactor)
 - use RCON instead of SSH to send /stop command to minecraft server
 - add support for ARK: Survival Evolved
 
-## Known bugs
-None ATM.
+## Known bugs and issues
+- undefined behaviour if the data in config.json is not valid (this will be fixed soon)
+- the help command does not send the command list. This is a TODO because it will require refactoring the way commands are handled in order to do properly.
