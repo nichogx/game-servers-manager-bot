@@ -6,17 +6,17 @@ import EC2 from 'aws-sdk/clients/ec2';
 import IntervalManager from "../IntervalManager";
 
 export class NotRunningError extends Error {
-    constructor(...args: any[]) {
-        super(...args);
-        Error.captureStackTrace(this, NotRunningError);
-    }
+	constructor(...args: any[]) {
+		super(...args);
+		Error.captureStackTrace(this, NotRunningError);
+	}
 }
 
 export class TimeoutError extends Error {
-    constructor(...args: any[]) {
-        super(...args);
-        Error.captureStackTrace(this, TimeoutError);
-    }
+	constructor(...args: any[]) {
+		super(...args);
+		Error.captureStackTrace(this, TimeoutError);
+	}
 }
 
 export interface IServerConfig {
@@ -89,6 +89,10 @@ export abstract class ServerManager {
 	 * @param configs the IServerConfig for this server
 	 */
 	public constructor(logger: Logger, checkIntervalMinutes: number = 0, configs: IServerConfig) {
+		if (!logger || checkIntervalMinutes < 0 || !configs) {
+			throw new Error("invalid parameters for ServerManager constructor");
+		}
+
 		this.logger = logger;
 
 		this.configs = configs;

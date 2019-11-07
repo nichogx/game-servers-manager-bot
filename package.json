@@ -1,10 +1,10 @@
 {
   "name": "game-servers-manager-bot",
-  "version": "1.0.0-beta.0",
+  "version": "1.0.0-beta.1",
   "description": "Server Manager Bot",
   "main": "src/managerbot.js",
   "scripts": {
-    "test": "mocha --timeout 10000 test",
+    "test": "mocha",
     "cover": "nyc --reporter text --reporter html yarn run test",
     "build": "tsc",
     "start": "node src/managerbot.js"
@@ -18,7 +18,9 @@
     "chai": "^4.2.0",
     "chai-as-promised": "^7.1.1",
     "mocha": "^6.2.2",
-    "nyc": "^14.1.1"
+    "nyc": "^14.1.1",
+    "source-map-support": "^0.5.16",
+    "ts-node": "^8.4.1"
   },
   "dependencies": {
     "ajv": "^6.10.2",

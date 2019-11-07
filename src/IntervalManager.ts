@@ -23,7 +23,7 @@ export default class IntervalManager {
 	 * @returns the state of the timeout (active or inactive)
 	 */
 	public start(): boolean {
-		if (this.interval === null && this.seconds !== 0) {
+		if (this.interval === null && this.seconds > 0) {
 			this.interval = setInterval(() => {
 				this.callback();
 			}, this.seconds * 1000);

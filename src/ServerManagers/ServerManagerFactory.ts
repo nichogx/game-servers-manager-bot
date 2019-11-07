@@ -2,6 +2,13 @@ import { ServerManager, IServerConfig } from "./ServerManager";
 import { MinecraftServerManager } from "./MinecraftServerManager";
 import { Logger } from "winston";
 
+export class UnsupportedServerError extends Error {
+	constructor(...args: any[]) {
+        super(...args);
+        Error.captureStackTrace(this, UnsupportedServerError);
+    }
+}
+
 export default class ServerManagerFactory {
 
 	/**
@@ -19,7 +26,7 @@ export default class ServerManagerFactory {
 		if (type === "minecraft") {
 			return new MinecraftServerManager(logger, minutesCheck, configs);
 		} else {
-			throw new Error("unknown/unsupported server type: " + type);
+			throw new UnsupportedServerError("unknown/unsupported server type: " + type);
 		}
 	}
 }
