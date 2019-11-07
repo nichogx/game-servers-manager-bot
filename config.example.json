@@ -1,0 +1,20 @@
+{
+	"language": "portuguese",
+	"check_every_x_minutes": 15,
+	"servers": [
+		{
+			"name": "minecraft",
+			"type": "minecraft",
+			"instanceId": "",
+			"port": 25565,
+			"awsRegion": "",
+			"sshUser": "",
+			"sshKeyPath": "",
+			"modpackLink": "",
+			"closeScriptPath": "",
+			"permittedRoles": [
+				"minecraft_whitelist"
+			]
+		}
+	]
+}

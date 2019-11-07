@@ -2,12 +2,12 @@
   "name": "minecraftmanagerbot",
   "version": "1.0.0",
   "description": "Minecraft Manager Bot",
-  "main": "src/minecraftbot.js",
+  "main": "src/managerbot.js",
   "scripts": {
     "test": "mocha --timeout 10000 test",
     "cover": "nyc --reporter text --reporter html yarn run test",
     "build": "tsc",
-    "start": "node src/minecraftbot.js"
+    "start": "node src/managerbot.js"
   },
   "author": "Nicholas Xavier",
   "license": "MIT",

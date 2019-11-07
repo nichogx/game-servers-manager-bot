@@ -1,13 +1,15 @@
 node_modules
+
 .env
+config.json
 
 .nyc_output
 coverage
 
-src/*.js
-test/*.js
+src/**/*.js
+test/**/*.js
 
-src/*.map
-test/*.map
+src/**/*.map
+test/**/*.map
 
 logs/*.log
