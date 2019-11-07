@@ -6,6 +6,7 @@ import EC2 from 'aws-sdk/clients/ec2';
 import IntervalManager from "./IntervalManager";
 
 export interface IServerConfig {
+	name: string,
 	type: string,
 	instanceId: string,
 	port: number,
@@ -63,11 +64,11 @@ export abstract class ServerManager {
 	 * @param checkIntervalMinutes the interval to check if server should be closed (0 players),
 	 * if this is 0, won't check.
 	 */
-	public constructor(logger: Logger, checkIntervalMinutes: number = 0, configs: IServerConfig, name: string) {
+	public constructor(logger: Logger, checkIntervalMinutes: number = 0, configs: IServerConfig) {
 		this.logger = logger;
 
 		this.configs = configs;
-		this.serverName = name;
+		this.serverName = configs.name;
 
 		const requiredEnvs = ["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY"];
 		for (const env of requiredEnvs) {

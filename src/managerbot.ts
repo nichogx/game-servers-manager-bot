@@ -10,7 +10,7 @@ import pjson from "../package.json";
 import { MCServer } from "./MCServer";
 import { LoggerFactory } from "./LoggerFactory";
 
-import { ServerManager } from "./ServerManager";
+import { ServerManager, IServerConfig } from "./ServerManager";
 import { MinecraftServerManager } from "./MinecraftServerManager";
 
 // configures logger
@@ -39,13 +39,24 @@ const token: string = process.env.TOKEN;
 // creates the bot
 const bot: Client = new Client();
 
-// creates the server manager
-let manager: ServerManager = null;
-try {
-	manager = new MinecraftServerManager(logger, cfgs.check_every_x_minutes);
-} catch (e) {
-	logger.error(e);
-	process.exit(1);
+// TODO validate the config file
+
+// creates the server managers
+let servers: { [name: string]: ServerManager } = {};
+for (const server of cfgs.servers) {
+	let manager: ServerManager = null;
+	try {
+		if (server.type === "minecraft") {
+			manager = new MinecraftServerManager(logger, cfgs.check_every_x_minutes, server);
+		} else {
+			throw new Error(server.type + ": unknown server type (not supported)");
+		}
+	} catch (e) {
+		logger.error(e);
+		process.exit(1);
+	}
+
+	servers[server.name] = manager;
 }
 
 /**
@@ -62,15 +73,17 @@ bot.on("ready", () => {
 	// reset activity once every half hour (sometimes it weirds out)
 	setInterval(() => bot.user.setActivity(pjson.description + " v" + pjson.version), 1800000);
 
-	// check if server is open. If it is, start close check timer
-	manager.getInstance().then((instance) => {
-		if (instance.State.Code === 16) { // running
-			logger.verbose("instance running, manually starting interval");
-			manager.startInterval();
-		} else {
-			logger.verbose("instance not running");
-		}
-	});
+	// for each server, check if it is open. If it is, start close check timer
+	for (const server of Object.keys(servers)) {
+		servers[server].getInstance().then((instance) => {
+			if (instance.State.Code === 16) { // running
+				logger.verbose(server + ": instance running, manually starting interval");
+				servers[server].startInterval();
+			} else {
+				logger.verbose(server + ": instance not running");
+			}
+		});
+	}
 });
 
 /**

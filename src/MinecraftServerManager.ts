@@ -7,8 +7,8 @@ const ssh: any = require('ssh-exec');
 
 export class MinecraftServerManager extends ServerManager {
 
-	public constructor(logger: Logger, checkIntervalMinutes: number = 0, configs: IServerConfig, name: string) {
-		super(logger, checkIntervalMinutes, configs, name);
+	public constructor(logger: Logger, checkIntervalMinutes: number = 0, configs: IServerConfig) {
+		super(logger, checkIntervalMinutes, configs);
 	}
 
 	public closeServer(ip: string): void {
