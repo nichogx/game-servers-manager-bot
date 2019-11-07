@@ -17,7 +17,7 @@ const logger: Logger = LoggerFactory.configureLogger();
 logger.info("Starting bot");
 
 const ajv = new Ajv();
-if (!ajv.validate(require("./schemas/managerBotConfig.schema.json"), cfgs)) {
+if (!ajv.validate(require("./schemas/managerbotConfig.schema.json"), cfgs)) {
 	logger.error("invalid config file");
 	logger.error(ajv.errorsText(null, { dataVar: "configs" }));
 	process.exit(1);
