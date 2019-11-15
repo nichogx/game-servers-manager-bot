@@ -8,6 +8,7 @@
 	"no_permission": "You do not have the necessary permissions to manage this server.",
 	"already_open": "The server is already open. IP:",
 	"please_wait_instance_state": "Please wait. Something wrong is happening with the AWS virtual machine. Wait a bit or call <@184075556017537025>.",
+	"please_wait_instance_stopping": "The VM is shutting down. Please wait until it is completely shut down before starting it up again.",
 	"instance_starting": "Starting AWS virtual machine... Please wait...",
 	"instance_started_waiting_server": "Virtual machine started... Starting Minecraft server...",
 	"server_opened": "Server open.",

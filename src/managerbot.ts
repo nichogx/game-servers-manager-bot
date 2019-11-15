@@ -221,6 +221,9 @@ bot.on("message", async message => {
 					logger.error("location: open command");
 					message.channel.send(strings.error_starting);
 				});
+			} else if (instance.State.Code === 64) { // code 64: stopping
+				logger.verbose("instance stopping, sending message");
+				message.channel.send(strings.please_wait_instance_stopping);
 			} else {
 				// other state
 				logger.verbose("unknown state, sending message");
@@ -244,7 +247,7 @@ bot.on("message", async message => {
 
 /**
  * Handles the message that notifies the Discord user that the ec2 instance is starting
- * 
+ *
  * @param statusMessage the message to update
  */
 function notifyInstanceStarting(statusMessage: Message, server: ServerManager): void {
@@ -273,7 +276,7 @@ function notifyInstanceStarting(statusMessage: Message, server: ServerManager): 
 
 /**
  * Handles the message that notifies the Discord user that Minecraft is starting
- * 
+ *
  * @param statusMessage the message to update
  * @param ip the ip of the ec2 instance
  */

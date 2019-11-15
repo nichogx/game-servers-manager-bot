@@ -8,6 +8,7 @@
 	"no_permission": "Você não tem as permissões necessárias para gerenciar esse servidor.",
 	"already_open": "O servidor já está aberto. IP:",
 	"please_wait_instance_state": "Por favor aguarde. Algo de errado está acontecendo com a máquina virtual na AWS. Perae ou chama o <@184075556017537025>.",
+	"please_wait_instance_stopping": "A VM está desligando. Por favor espere ela terminar de desligar antes de ligar novamente.",
 	"instance_starting": "Iniciando máquina virtual na AWS... Por favor aguarde...",
 	"instance_started_waiting_server": "Máquina virtual inicializada... Iniciando servidor de minecraft...",
 	"server_opened": "Servidor aberto.",
