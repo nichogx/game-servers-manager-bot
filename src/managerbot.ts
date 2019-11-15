@@ -117,6 +117,8 @@ bot.on("message", async message => {
 	if (!message.isMentioned(bot.user)) return; // ignore if the message doesn't mention the bot
 
 	const fullcmd: string[] = message.content.split(" ").filter(el => el !== "");
+	if (!fullcmd[0].match(`^<@${bot.user.id}>$`)) return; // ignore if the mention isn't the first thing
+
 	if (fullcmd.length === 1 || fullcmd[1] === "help") {
 		let sendText = strings.command_format;
 		sendText += "\n" + strings.command_list;
@@ -127,7 +129,7 @@ bot.on("message", async message => {
 		}
 		message.channel.send(sendText);
 		return;
-	} else if (fullcmd.length !== 3 || !fullcmd[0].match(/^<@\d+>$/)) {
+	} else if (fullcmd.length !== 3) {
 		let sendText = strings.invalid_command;
 		sendText += "\n" + strings.command_format;
 		sendText += "\n" + strings.for_help;
