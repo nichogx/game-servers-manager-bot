@@ -76,26 +76,28 @@ export class MinecraftServerManager extends ServerManager {
 				}, 20000); // 20 seconds
 
 				mc.ping({ host: instance.PublicIpAddress, port: this.configs.port }, (err: any, result: NewPingResult) => {
+					clearTimeout(timeout); // we received a response so we don't need the timeout anymore
+
 					if (err) {
-						clearTimeout(timeout);
 						return reject(new Error(err.code));
-					} else {
-						clearTimeout(timeout);
-						const serverInfo: IServerInfo = {
-							players: {
-								online: result.players.online,
-								max: result.players.max
-							},
-							ip: instance.PublicIpAddress,
-							port: this.configs.port
-						};
-
-						if (result.players.sample instanceof Array) {
-							serverInfo.players.list = result.players.sample.map(x => x.name);
-						}
-
-						return resolve(serverInfo);
+					} else if (!result || !result.players) {
+						return reject(new Error("RESULT OR PLAYERS UNDEFINED"));
 					}
+
+					const serverInfo: IServerInfo = {
+						players: {
+							online: result.players.online,
+							max: result.players.max
+						},
+						ip: instance.PublicIpAddress,
+						port: this.configs.port
+					};
+
+					if (result.players.sample instanceof Array) {
+						serverInfo.players.list = result.players.sample.map(x => x.name);
+					}
+
+					return resolve(serverInfo);
 				});
 			});
 		});
