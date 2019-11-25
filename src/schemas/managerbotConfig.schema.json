@@ -96,8 +96,7 @@
 			  "type": "string",
 			  "title": "The Modpacklink Schema",
 			  "default": "",
-			  "pattern": "^(.*)$",
-			  "format": "uri"
+			  "pattern": "^(.*)$"
 			},
 			"closeScriptPath": {
 			  "$id": "#/properties/servers/items/properties/closeScriptPath",

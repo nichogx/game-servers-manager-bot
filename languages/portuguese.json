@@ -14,7 +14,7 @@
 	"server_opened": "Servidor aberto.",
 	"instance_not_running": "O servidor não está aberto",
 	"server_not_empty": "O servidor não está vazio. Players: ",
-	"modpack_link": "Você precisa da versão mais nova do Forge 1.12.2\nLink do modpack: ",
+	"modpack_link": "Link do modpack: ",
 	"error_describing": "<@184075556017537025> deu ruim aqui: error describing instance",
 	"error_starting": "<@184075556017537025> deu ruim aqui: error starting instance",
 	"server_closing": "Fechando servidor.",
