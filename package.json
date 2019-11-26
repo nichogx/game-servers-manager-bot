@@ -1,6 +1,6 @@
 {
   "name": "game-servers-manager-bot",
-  "version": "1.0.0-beta.4",
+  "version": "1.0.0-beta.5",
   "description": "Server Manager Bot",
   "main": "src/managerbot.js",
   "scripts": {

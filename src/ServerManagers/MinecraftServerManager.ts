@@ -57,6 +57,8 @@ export class MinecraftServerManager extends ServerManager {
 		}).catch(err => {
 			this.logger.error(err);
 			this.logger.error(this.serverName + ": location: checkShouldClose");
+			this.logger.info(this.serverName + ": can't access Minecraft server. Assuming dead. Shutting down machine.");
+			this.closeServer();
 		});
 	}
 
@@ -69,7 +71,7 @@ export class MinecraftServerManager extends ServerManager {
 					return reject(new NotRunningError("server is not running, can't get info"));
 				}
 
-				// this timeout is a hack to makeup for the fact that the library 
+				// this timeout is a hack to makeup for the fact that the library
 				// sometimes doesn't call the callback
 				const timeout = setTimeout(() => {
 					reject(new TimeoutError("getInfo timed out"));
