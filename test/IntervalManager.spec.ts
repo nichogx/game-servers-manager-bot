@@ -6,12 +6,17 @@ describe("Tests for IntervalManager", () => {
 
 	let interval: IntervalManager = null;
 
+	let called: boolean = false;
+
 	beforeEach(() => {
-		interval = new IntervalManager(() => { }, 10);
+		interval = new IntervalManager(() => {
+			called = true;
+		}, 10);
 	});
 
 	afterEach(() => {
 		interval.stop();
+		called = false;
 	});
 
 	it("should be able to start the timer", () => {
@@ -51,5 +56,15 @@ describe("Tests for IntervalManager", () => {
 
 	it("should be able to reset a timer with an argument", () => {
 		expect(interval.reset(5)).to.equal(true);
+	});
+
+	it("should call the callback after time has passed, but not before", (done) => {
+		expect(called).to.equal(false);
+		expect(interval.reset(0.2)).to.equal(true);
+		expect(called).to.equal(false);
+		setTimeout(() => {
+			expect(called).to.equal(true);
+			done();
+		}, 0.4 * 1000);
 	});
 });
