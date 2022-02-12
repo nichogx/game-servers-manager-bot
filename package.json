@@ -23,7 +23,7 @@
     "ts-node": "^8.4.1"
   },
   "dependencies": {
-    "ajv": "^6.10.2",
+    "ajv": "^6.12.3",
     "aws-sdk": "^2.562.0",
     "discord.js": "^11.5.1",
     "dotenv": "^8.0.0",
